@@ -3,14 +3,15 @@
  */
 package com.seu.magicfilter.widget;
 
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
+import android.opengl.EGL14;
+import android.opengl.GLES20;
+import android.util.AttributeSet;
+import android.view.SurfaceHolder;
 
 import com.seu.magicfilter.camera.CameraEngine;
 import com.seu.magicfilter.camera.utils.CameraInfo;
@@ -25,15 +26,14 @@ import com.seu.magicfilter.utils.Rotation;
 import com.seu.magicfilter.utils.TextureRotationUtil;
 import com.seu.magicfilter.widget.base.MagicBaseView;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
-import android.opengl.EGL14;
-import android.opengl.GLES20;
-import android.util.AttributeSet;
-import android.view.SurfaceHolder;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Created by why8222 on 2016/2/25.

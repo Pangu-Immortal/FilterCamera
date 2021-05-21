@@ -4,19 +4,19 @@
 
 package com.seu.magicfilter.encoder.gles;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.IntBuffer;
-
-import com.seu.magicfilter.utils.OpenGlUtils;
-
 import android.graphics.Bitmap;
 import android.opengl.EGL14;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.util.Log;
+
+import com.seu.magicfilter.utils.OpenGlUtils;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.IntBuffer;
 
 /**
  * Common base class for EGL surfaces.

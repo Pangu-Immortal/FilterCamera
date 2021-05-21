@@ -4,11 +4,11 @@
 
 package com.seu.magicfilter.encoder.video;
 
-import com.seu.magicfilter.encoder.gles.EglCore;
-import com.seu.magicfilter.encoder.gles.EglSurfaceBase;
-
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
+
+import com.seu.magicfilter.encoder.gles.EglCore;
+import com.seu.magicfilter.encoder.gles.EglSurfaceBase;
 
 /**
  * Recordable EGL window surface.

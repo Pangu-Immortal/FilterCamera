@@ -3,14 +3,14 @@
  */
 package com.seu.magicfilter;
 
-import java.io.File;
-
 import com.seu.magicfilter.camera.CameraEngine;
 import com.seu.magicfilter.filter.helper.MagicFilterType;
 import com.seu.magicfilter.helper.SavePictureTask;
 import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.widget.MagicCameraView;
 import com.seu.magicfilter.widget.base.MagicBaseView;
+
+import java.io.File;
 
 /**
  * Created by why8222 on 2016/2/25.

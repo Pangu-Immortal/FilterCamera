@@ -3,17 +3,17 @@
  */
 package com.seu.magicfilter.helper;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import com.seu.magicfilter.utils.MagicParams;
-
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
+
+import com.seu.magicfilter.utils.MagicParams;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class SavePictureTask extends AsyncTask<Bitmap, Integer, String>{
 	

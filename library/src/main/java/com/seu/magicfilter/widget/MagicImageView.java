@@ -3,10 +3,10 @@
  */
 package com.seu.magicfilter.widget;
 
-import java.nio.ByteBuffer;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.util.AttributeSet;
+import android.util.Log;
 
 import com.seu.magicfilter.beautify.MagicJni;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
@@ -14,10 +14,10 @@ import com.seu.magicfilter.helper.SavePictureTask;
 import com.seu.magicfilter.utils.OpenGlUtils;
 import com.seu.magicfilter.widget.base.MagicBaseView;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.util.AttributeSet;
-import android.util.Log;
+import java.nio.ByteBuffer;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Created by why8222 on 2016/2/25.

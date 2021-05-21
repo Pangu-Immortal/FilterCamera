@@ -3,13 +3,14 @@
  */
 package com.seu.magicfilter.filter.advanced;
 
-import java.nio.ByteBuffer;
+import android.opengl.GLES20;
 
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.utils.OpenGlUtils;
 
-import android.opengl.GLES20;
+import java.nio.ByteBuffer;
+
 import duxiaoman.guofeng.myapplicationbeauty.R;
 
 public class MagicCalmFilter extends GPUImageFilter{

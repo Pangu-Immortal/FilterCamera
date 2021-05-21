@@ -3,11 +3,11 @@
  */
 package com.seu.magicfilter.filter.base;
 
+import android.opengl.GLES20;
+
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.utils.OpenGlUtils;
-
-import android.opengl.GLES20;
 
 public class MagicLookupFilter extends GPUImageFilter {
 
