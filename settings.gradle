@@ -1,1 +1,2 @@
 include ':app', ':magicfilter'
+rootProject.name = "FilterCamera"

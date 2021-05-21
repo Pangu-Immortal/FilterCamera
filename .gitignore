@@ -54,3 +54,4 @@ lint/tmp/
 # lint/reports/
 /.idea/
 /magicfilter/.externalNativeBuild/
+/library/.cxx/

@@ -1,0 +1,13 @@
+/*
+ * Copyright (C) 2019 Baidu, Inc. All Rights Reserved.
+ */
+package com.seu.magicfilter.filter.advanced;
+
+import com.seu.magicfilter.filter.base.MagicLookupFilter;
+
+public class MagicFairytaleFilter extends MagicLookupFilter{
+
+	public MagicFairytaleFilter() {
+		super("filter/fairy_tale.png");
+	}
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (C) 2019 Baidu, Inc. All Rights Reserved.
+  -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="duxiaoman.guofeng.myapplicationbeauty">
+
+    <application android:theme="@style/AppTheme">
+        <activity android:name="com.seu.magicfilter.MainActivity" />
+    </application>
+
+</manifest>
