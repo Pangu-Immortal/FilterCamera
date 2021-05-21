@@ -3,16 +3,16 @@
  */
 package com.seu.magicfilter.camera;
 
-import java.io.IOException;
-
-import com.seu.magicfilter.camera.utils.CameraUtils;
-
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.view.SurfaceView;
+
+import com.seu.magicfilter.camera.utils.CameraUtils;
+
+import java.io.IOException;
 
 public class CameraEngine {
     private static Camera camera = null;

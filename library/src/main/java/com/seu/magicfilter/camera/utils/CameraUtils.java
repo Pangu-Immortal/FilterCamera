@@ -3,9 +3,9 @@
  */
 package com.seu.magicfilter.camera.utils;
 
-import java.util.List;
-
 import android.hardware.Camera;
+
+import java.util.List;
 
 /**
  * Created by why8222 on 2016/2/25.

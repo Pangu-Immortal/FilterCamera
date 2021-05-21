@@ -3,10 +3,10 @@
  */
 package com.seu.magicfilter.utils;
 
-import com.seu.magicfilter.widget.base.MagicBaseView;
-
 import android.content.Context;
 import android.os.Environment;
+
+import com.seu.magicfilter.widget.base.MagicBaseView;
 
 /**
  * Created by why8222 on 2016/2/26.

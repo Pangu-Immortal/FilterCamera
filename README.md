@@ -1,6 +1,6 @@
-### MagicCamera
+# FilterCamera
 
-实时滤镜相机
+实时滤镜相机、美颜相机、相机水印
 
 [原地址点这里](https://github.com/wuhaoyu1990/MagicCamera)
 

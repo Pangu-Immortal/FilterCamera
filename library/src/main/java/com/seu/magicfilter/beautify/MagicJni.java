@@ -3,9 +3,9 @@
  */
 package com.seu.magicfilter.beautify;
 
-import java.nio.ByteBuffer;
-
 import android.graphics.Bitmap;
+
+import java.nio.ByteBuffer;
 
 /**
  * Created by why8222 on 2016/2/29.

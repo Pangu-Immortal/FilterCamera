@@ -3,11 +3,12 @@
  */
 package com.seu.magicfilter.filter.advanced;
 
+import android.opengl.GLES20;
+
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.utils.OpenGlUtils;
 
-import android.opengl.GLES20;
 import duxiaoman.guofeng.myapplicationbeauty.R;
 
 public class MagicPixarFilter extends GPUImageFilter{

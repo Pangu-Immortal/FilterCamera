@@ -4,16 +4,16 @@
 
 package com.seu.magicfilter.encoder.video;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.util.Log;
 import android.view.Surface;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class wraps up the core components used for surface-input video encoding.
