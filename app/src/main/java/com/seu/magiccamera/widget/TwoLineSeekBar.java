@@ -1,22 +1,20 @@
 package com.seu.magiccamera.widget;
 
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.widget.Scroller;
 import android.view.View;
-import android.graphics.Rect;
-import android.graphics.Paint;
-
-import java.util.Map;
-
-import android.content.Context;
-import android.util.AttributeSet;
-import android.graphics.Color;
-import android.graphics.Canvas;
-
-import java.util.TreeMap;
+import android.widget.Scroller;
 
 import com.seu.magiccamera.R;
+
+import java.util.Map;
+import java.util.TreeMap;
 
 public class TwoLineSeekBar extends View {
     private float mDefaultAreaRadius = 0.0f;

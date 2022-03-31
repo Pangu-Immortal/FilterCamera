@@ -1,16 +1,20 @@
-package com.seu.magiccamera.activity;
+package com.seu.magiccamera.activity
 
-import android.app.Activity;
-import android.os.Bundle;
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 
 /**
- * Created by why8222 on 2016/3/18.
+ * Doc说明 (此类核心功能):
+ * @date on 2022/3/31 18:00
+ * +--------------------------------------------+
+ * | @author qihao                              |
+ * | @GitHub https://github.com/Pangu-Immortal  |
+ * +--------------------------------------------+
  */
-public class AlbumActivity extends Activity{
+class AlbumActivity : AppCompatActivity() {
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
     }
 }

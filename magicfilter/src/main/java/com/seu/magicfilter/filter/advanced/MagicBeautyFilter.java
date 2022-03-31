@@ -1,14 +1,11 @@
 package com.seu.magicfilter.filter.advanced;
 
-import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import com.seu.magicfilter.R;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.utils.OpenGlUtils;
-
-import java.nio.FloatBuffer;
 
 /**
  * Created by Administrator on 2016/5/22.

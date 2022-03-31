@@ -16,11 +16,6 @@
 
 package com.seu.magicfilter.encoder.video;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.nio.FloatBuffer;
-
 import android.graphics.SurfaceTexture;
 import android.opengl.EGLContext;
 import android.os.Handler;
@@ -29,11 +24,16 @@ import android.os.Message;
 import android.util.Log;
 
 import com.seu.magicfilter.camera.utils.CameraInfo;
+import com.seu.magicfilter.encoder.gles.EglCore;
 import com.seu.magicfilter.filter.base.MagicCameraInputFilter;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.filter.helper.MagicFilterFactory;
 import com.seu.magicfilter.filter.helper.MagicFilterType;
-import com.seu.magicfilter.encoder.gles.EglCore;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.FloatBuffer;
 
 /**
  * Encode a movie from frames rendered from an external texture image.

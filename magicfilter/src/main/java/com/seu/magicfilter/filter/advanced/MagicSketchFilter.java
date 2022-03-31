@@ -4,7 +4,6 @@ import android.opengl.GLES20;
 
 import com.seu.magicfilter.R;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
-import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.utils.OpenGlUtils;
 
 public class MagicSketchFilter extends GPUImageFilter{

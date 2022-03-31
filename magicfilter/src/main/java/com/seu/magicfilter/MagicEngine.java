@@ -1,11 +1,9 @@
 package com.seu.magicfilter;
 
-import android.content.Context;
-
 import com.seu.magicfilter.camera.CameraEngine;
 import com.seu.magicfilter.filter.helper.MagicFilterType;
-import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.helper.SavePictureTask;
+import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.widget.MagicCameraView;
 import com.seu.magicfilter.widget.base.MagicBaseView;
 

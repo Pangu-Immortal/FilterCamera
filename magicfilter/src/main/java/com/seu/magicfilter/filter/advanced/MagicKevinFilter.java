@@ -2,7 +2,6 @@ package com.seu.magicfilter.filter.advanced;
 
 import android.opengl.GLES20;
 
-import com.seu.magicfilter.MagicEngine;
 import com.seu.magicfilter.R;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.utils.MagicParams;

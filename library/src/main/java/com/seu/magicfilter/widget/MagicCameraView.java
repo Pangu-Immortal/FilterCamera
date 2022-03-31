@@ -211,8 +211,7 @@ public class MagicCameraView extends MagicBaseView {
                     public void run() {
                         final Bitmap photo = drawPhoto(bitmap,CameraEngine.getCameraInfo().isFront);
                         GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight);
-                        if (photo != null)
-                            savePictureTask.execute(photo);
+                        savePictureTask.execute(photo);
                     }
                 });
                 CameraEngine.startPreview();
