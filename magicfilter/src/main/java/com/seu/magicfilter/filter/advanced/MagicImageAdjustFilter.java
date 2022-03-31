@@ -1,8 +1,5 @@
 package com.seu.magicfilter.filter.advanced;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.seu.magicfilter.filter.base.MagicBaseGroupFilter;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageBrightnessFilter;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageContrastFilter;
@@ -11,6 +8,9 @@ import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageHueFilter;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageSaturationFilter;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageSharpenFilter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MagicImageAdjustFilter extends MagicBaseGroupFilter{
 	

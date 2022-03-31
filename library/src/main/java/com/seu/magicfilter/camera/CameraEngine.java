@@ -131,7 +131,12 @@ public class CameraEngine {
 
     public static void takePicture(Camera.ShutterCallback shutterCallback, Camera.PictureCallback rawCallback,
                                    Camera.PictureCallback jpegCallback){
-        camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+        try {
+            // 这个地方在连拍时还有很多异常情况；
+            camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static com.seu.magicfilter.camera.utils.CameraInfo getCameraInfo(){
@@ -142,7 +147,7 @@ public class CameraEngine {
         info.previewWidth = size.width;
         info.previewHeight = size.height;
         info.orientation = cameraInfo.orientation;
-        info.isFront = cameraID == 1 ? true : false;
+        info.isFront = cameraID == 1;
         size = getPictureSize();
         info.pictureWidth = size.width;
         info.pictureHeight = size.height;

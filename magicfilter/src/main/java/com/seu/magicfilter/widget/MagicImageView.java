@@ -7,9 +7,8 @@ import android.util.Log;
 
 import com.seu.magicfilter.beautify.MagicJni;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
-import com.seu.magicfilter.utils.OpenGlUtils;
-import com.seu.magicfilter.utils.TextureRotationUtil;
 import com.seu.magicfilter.helper.SavePictureTask;
+import com.seu.magicfilter.utils.OpenGlUtils;
 import com.seu.magicfilter.widget.base.MagicBaseView;
 
 import java.nio.ByteBuffer;

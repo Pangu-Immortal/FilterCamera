@@ -4,21 +4,22 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.PermissionChecker;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.PermissionChecker;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.seu.magiccamera.R;
 import com.seu.magiccamera.adapter.FilterAdapter;
@@ -33,9 +34,14 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Created by why8222 on 2016/3/17.
+ * Doc说明 (此类核心功能):
+ * @date on 2022/3/31 18:04
+ * +--------------------------------------------+
+ * | @author qihao                              |
+ * | @GitHub https://github.com/Pangu-Immortal  |
+ * +--------------------------------------------+
  */
-public class CameraActivity extends Activity{
+public class CameraActivity extends AppCompatActivity {
     private LinearLayout mFilterLayout;
     private RecyclerView mFilterListView;
     private FilterAdapter mAdapter;
@@ -215,10 +221,16 @@ public class CameraActivity extends Activity{
         }
     }
 
+    /**
+     * 拍照
+     */
     private void takePhoto(){
         magicEngine.savePicture(getOutputMediaFile(),null);
     }
 
+    /**
+     * 拍视频
+     */
     private void takeVideo(){
         if(isRecording) {
             animator.end();
@@ -294,7 +306,7 @@ public class CameraActivity extends Activity{
 
     public File getOutputMediaFile() {
         File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "MagicCamera");
+                Environment.DIRECTORY_PICTURES), "DCIM/Camera");
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
                 return null;

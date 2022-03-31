@@ -8,10 +8,10 @@ import android.util.AttributeSet;
 import com.seu.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.filter.helper.MagicFilterFactory;
 import com.seu.magicfilter.filter.helper.MagicFilterType;
+import com.seu.magicfilter.helper.SavePictureTask;
 import com.seu.magicfilter.utils.OpenGlUtils;
 import com.seu.magicfilter.utils.Rotation;
 import com.seu.magicfilter.utils.TextureRotationUtil;
-import com.seu.magicfilter.helper.SavePictureTask;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -21,9 +21,15 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Created by why8222 on 2016/2/25.
+ * Doc说明 (此类核心功能):
+ *
+ * @date on 2022/3/31 17:00
+ * +--------------------------------------------+
+ * | @author qihao                              |
+ * | @GitHub https://github.com/Pangu-Immortal  |
+ * +--------------------------------------------+
  */
-public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceView.Renderer{
+public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceView.Renderer {
     /**
      * 所选择的滤镜，类型为MagicBaseGroupFilter
      * 1.mCameraInputFilter将SurfaceTexture中YUV数据绘制到FrameBuffer
@@ -82,14 +88,14 @@ public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceVi
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GLES20.glDisable(GL10.GL_DITHER);
-        GLES20.glClearColor(0,0, 0, 0);
+        GLES20.glClearColor(0, 0, 0, 0);
         GLES20.glEnable(GL10.GL_CULL_FACE);
         GLES20.glEnable(GL10.GL_DEPTH_TEST);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GLES20.glViewport(0,0,width, height);
+        GLES20.glViewport(0, 0, width, height);
         surfaceWidth = width;
         surfaceHeight = height;
         onFilterChanged();
@@ -101,14 +107,14 @@ public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceVi
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
     }
 
-    protected void onFilterChanged(){
-        if(filter != null) {
+    protected void onFilterChanged() {
+        if (filter != null) {
             filter.onDisplaySizeChanged(surfaceWidth, surfaceHeight);
             filter.onInputSizeChanged(imageWidth, imageHeight);
         }
     }
 
-    public void setFilter(final MagicFilterType type){
+    public void setFilter(final MagicFilterType type) {
         queueEvent(new Runnable() {
             @Override
             public void run() {
@@ -125,7 +131,7 @@ public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceVi
     }
 
     protected void deleteTextures() {
-        if(textureId != OpenGlUtils.NO_TEXTURE){
+        if (textureId != OpenGlUtils.NO_TEXTURE) {
             queueEvent(new Runnable() {
                 @Override
                 public void run() {
@@ -140,29 +146,29 @@ public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceVi
 
     public abstract void savePicture(SavePictureTask savePictureTask);
 
-    protected void adjustSize(int rotation, boolean flipHorizontal, boolean flipVertical){
+    protected void adjustSize(int rotation, boolean flipHorizontal, boolean flipVertical) {
         float[] textureCords = TextureRotationUtil.getRotation(Rotation.fromInt(rotation),
                 flipHorizontal, flipVertical);
         float[] cube = TextureRotationUtil.CUBE;
-        float ratio1 = (float)surfaceWidth / imageWidth;
-        float ratio2 = (float)surfaceHeight / imageHeight;
+        float ratio1 = (float) surfaceWidth / imageWidth;
+        float ratio2 = (float) surfaceHeight / imageHeight;
         float ratioMax = Math.max(ratio1, ratio2);
         int imageWidthNew = Math.round(imageWidth * ratioMax);
         int imageHeightNew = Math.round(imageHeight * ratioMax);
 
-        float ratioWidth = imageWidthNew / (float)surfaceWidth;
-        float ratioHeight = imageHeightNew / (float)surfaceHeight;
+        float ratioWidth = imageWidthNew / (float) surfaceWidth;
+        float ratioHeight = imageHeightNew / (float) surfaceHeight;
 
-        if(scaleType == ScaleType.CENTER_INSIDE){
+        if (scaleType == ScaleType.CENTER_INSIDE) {
             cube = new float[]{
                     TextureRotationUtil.CUBE[0] / ratioHeight, TextureRotationUtil.CUBE[1] / ratioWidth,
                     TextureRotationUtil.CUBE[2] / ratioHeight, TextureRotationUtil.CUBE[3] / ratioWidth,
                     TextureRotationUtil.CUBE[4] / ratioHeight, TextureRotationUtil.CUBE[5] / ratioWidth,
                     TextureRotationUtil.CUBE[6] / ratioHeight, TextureRotationUtil.CUBE[7] / ratioWidth,
             };
-        }else if(scaleType == ScaleType.FIT_XY){
+        } else if (scaleType == ScaleType.FIT_XY) {
 
-        }else if(scaleType == ScaleType.CENTER_CROP){
+        } else if (scaleType == ScaleType.CENTER_CROP) {
             float distHorizontal = (1 - 1 / ratioWidth) / 2;
             float distVertical = (1 - 1 / ratioHeight) / 2;
             textureCords = new float[]{
@@ -182,7 +188,7 @@ public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceVi
         return coordinate == 0.0f ? distance : 1 - distance;
     }
 
-    public enum  ScaleType{
+    public enum ScaleType {
         CENTER_INSIDE,
         CENTER_CROP,
         FIT_XY;
