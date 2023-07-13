@@ -59,14 +59,14 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1.0"
                 android:scaleType="center"
-                android:src="@drawable/btn_camera_beauty"></ImageView>
+                android:src="@drawable/btn_camera_beauty"/>
 
             <ImageView
                 android:id="@+id/btn_camera_shutter"
                 android:layout_width="0dip"
                 android:layout_height="match_parent"
                 android:layout_weight="1.0"
-                android:src="@drawable/btn_camera_shutter"></ImageView>
+                android:src="@drawable/btn_camera_shutter"/>
 
             <ImageView
                 android:id="@+id/btn_camera_filter"
@@ -74,7 +74,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1.0"
                 android:scaleType="center"
-                android:src="@drawable/btn_camera_filter"></ImageView>
+                android:src="@drawable/btn_camera_filter"/>
         </LinearLayout>
 
         <include
