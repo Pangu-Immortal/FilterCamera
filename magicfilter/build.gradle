@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    compileSdk 33
 
     defaultConfig {
         minSdk 23
-        targetSdk 31
+        targetSdk 33
 
         externalNativeBuild {
             cmake {
@@ -34,13 +34,17 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-    lintOptions {
+    namespace 'com.seu.magicfilter'
+    lint {
         abortOnError false
+    }
+    kotlin {
+        jvmToolchain(8)
     }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
 }

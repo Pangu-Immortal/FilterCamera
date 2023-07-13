@@ -35,6 +35,7 @@ import java.util.Locale;
 
 /**
  * Doc说明 (此类核心功能):
+ *
  * @date on 2022/3/31 18:04
  * +--------------------------------------------+
  * | @author qihao                              |
@@ -107,16 +108,16 @@ public class CameraActivity extends AppCompatActivity {
         setContentView(R.layout.activity_camera);
         MagicEngine.Builder builder = new MagicEngine.Builder();
         magicEngine = builder
-                .build((MagicCameraView)findViewById(R.id.glsurfaceview_camera));
+                .build((MagicCameraView) findViewById(R.id.glsurfaceview_camera));
         initView();
     }
 
-    private void initView(){
-        mFilterLayout = (LinearLayout)findViewById(R.id.layout_filter);
+    private void initView() {
+        mFilterLayout = (LinearLayout) findViewById(R.id.layout_filter);
         mFilterListView = (RecyclerView) findViewById(R.id.filter_listView);
 
-        btn_shutter = (ImageView)findViewById(R.id.btn_camera_shutter);
-        btn_mode = (ImageView)findViewById(R.id.btn_camera_mode);
+        btn_shutter = (ImageView) findViewById(R.id.btn_camera_shutter);
+        btn_mode = (ImageView) findViewById(R.id.btn_camera_mode);
 
         findViewById(R.id.btn_camera_filter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_closefilter).setOnClickListener(btn_listener);
@@ -133,19 +134,27 @@ public class CameraActivity extends AppCompatActivity {
         mFilterListView.setAdapter(mAdapter);
         mAdapter.setOnFilterChangeListener(onFilterChangeListener);
 
-        animator = ObjectAnimator.ofFloat(btn_shutter,"rotation",0,360);
+        animator = ObjectAnimator.ofFloat(btn_shutter, "rotation", 0, 360);
         animator.setDuration(500);
         animator.setRepeatCount(ValueAnimator.INFINITE);
         Point screenSize = new Point();
         getWindowManager().getDefaultDisplay().getSize(screenSize);
-        MagicCameraView cameraView = (MagicCameraView)findViewById(R.id.glsurfaceview_camera);
+        MagicCameraView cameraView = (MagicCameraView) findViewById(R.id.glsurfaceview_camera);
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) cameraView.getLayoutParams();
         params.width = screenSize.x;
         params.height = screenSize.x * 4 / 3;
         cameraView.setLayoutParams(params);
+        //动态申请储存权限
+        boolean sSRPR = ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) | ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+        if (sSRPR) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
+        }
+
     }
 
-    private FilterAdapter.onFilterChangeListener onFilterChangeListener = new FilterAdapter.onFilterChangeListener(){
+    private FilterAdapter.onFilterChangeListener onFilterChangeListener = new FilterAdapter.onFilterChangeListener() {
 
         @Override
         public void onFilterChanged(MagicFilterType filterType) {
@@ -157,7 +166,7 @@ public class CameraActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
         if (grantResults.length != 1 || grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if(mode == MODE_PIC)
+            if (mode == MODE_PIC)
                 takePhoto();
             else
                 takeVideo();
@@ -170,17 +179,18 @@ public class CameraActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View v) {
-            switch (v.getId()){
+            switch (v.getId()) {
                 case R.id.btn_camera_mode:
                     switchMode();
                     break;
                 case R.id.btn_camera_shutter:
+                    //permission check
                     if (PermissionChecker.checkSelfPermission(CameraActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            == PackageManager.PERMISSION_DENIED) {
-                        ActivityCompat.requestPermissions(CameraActivity.this, new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
+                            == PermissionChecker.PERMISSION_DENIED_APP_OP) {
+                        ActivityCompat.requestPermissions(CameraActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                                 v.getId());
                     } else {
-                        if(mode == MODE_PIC)
+                        if (mode == MODE_PIC)
                             takePhoto();
                         else
                             takeVideo();
@@ -194,13 +204,13 @@ public class CameraActivity extends AppCompatActivity {
                     break;
                 case R.id.btn_camera_beauty:
                     new AlertDialog.Builder(CameraActivity.this)
-                            .setSingleChoiceItems(new String[] { "关闭", "1", "2", "3", "4", "5"}, MagicParams.beautyLevel,
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        magicEngine.setBeautyLevel(which);
-                                        dialog.dismiss();
-                                    }
-                                })
+                            .setSingleChoiceItems(new String[]{"关闭", "1", "2", "3", "4", "5"}, MagicParams.beautyLevel,
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            magicEngine.setBeautyLevel(which);
+                                            dialog.dismiss();
+                                        }
+                                    })
                             .setNegativeButton("取消", null)
                             .show();
                     break;
@@ -211,11 +221,11 @@ public class CameraActivity extends AppCompatActivity {
         }
     };
 
-    private void switchMode(){
-        if(mode == MODE_PIC){
+    private void switchMode() {
+        if (mode == MODE_PIC) {
             mode = MODE_VIDEO;
             btn_mode.setImageResource(R.drawable.icon_camera);
-        }else{
+        } else {
             mode = MODE_PIC;
             btn_mode.setImageResource(R.drawable.icon_video);
         }
@@ -224,25 +234,25 @@ public class CameraActivity extends AppCompatActivity {
     /**
      * 拍照
      */
-    private void takePhoto(){
-        magicEngine.savePicture(getOutputMediaFile(),null);
+    private void takePhoto() {
+        magicEngine.savePicture(getOutputMediaFile(), null);
     }
 
     /**
      * 拍视频
      */
-    private void takeVideo(){
-        if(isRecording) {
+    private void takeVideo() {
+        if (isRecording) {
             animator.end();
             magicEngine.stopRecord();
-        }else {
+        } else {
             animator.start();
             magicEngine.startRecord();
         }
         isRecording = !isRecording;
     }
 
-    private void showFilters(){
+    private void showFilters() {
         ObjectAnimator animator = ObjectAnimator.ofFloat(mFilterLayout, "translationY", mFilterLayout.getHeight(), 0);
         animator.setDuration(200);
         animator.addListener(new Animator.AnimatorListener() {
@@ -271,8 +281,8 @@ public class CameraActivity extends AppCompatActivity {
         animator.start();
     }
 
-    private void hideFilters(){
-        ObjectAnimator animator = ObjectAnimator.ofFloat(mFilterLayout, "translationY", 0 ,  mFilterLayout.getHeight());
+    private void hideFilters() {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(mFilterLayout, "translationY", 0, mFilterLayout.getHeight());
         animator.setDuration(200);
         animator.addListener(new Animator.AnimatorListener() {
 
@@ -305,17 +315,14 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     public File getOutputMediaFile() {
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "DCIM/Camera");
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), "DCIM/Camera");
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
                 return null;
             }
         }
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.CHINESE).format(new Date());
-        File mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+        return new File(mediaStorageDir.getPath() + File.separator +
                 "IMG_" + timeStamp + ".jpg");
-
-        return mediaFile;
     }
 }
