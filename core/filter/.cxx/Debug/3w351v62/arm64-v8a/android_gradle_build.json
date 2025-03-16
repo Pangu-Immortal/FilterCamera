@@ -1,0 +1,38 @@
+{
+  "buildFiles": [
+    "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/qihao/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/qihao/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "filter::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "filter",
+      "output": "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/cxx/Debug/3w351v62/obj/arm64-v8a/libfilter.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/Users/qihao/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/Users/qihao/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

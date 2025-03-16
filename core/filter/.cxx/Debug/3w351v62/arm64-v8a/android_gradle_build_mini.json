@@ -1,0 +1,27 @@
+{
+  "buildFiles": [
+    "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/qihao/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/qihao/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "filter::@6890427a1f51a3e7e1df": {
+      "artifactName": "filter",
+      "abi": "arm64-v8a",
+      "output": "/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/cxx/Debug/3w351v62/obj/arm64-v8a/libfilter.so",
+      "runtimeFiles": []
+    }
+  }
+}

@@ -1,0 +1,3 @@
+/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a/CMakeFiles/filter.dir
+/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a/CMakeFiles/edit_cache.dir
+/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a/CMakeFiles/rebuild_cache.dir

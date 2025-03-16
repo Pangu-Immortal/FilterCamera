@@ -1,0 +1,34 @@
+/Users/qihao/.gradle/caches/8.13/transforms/2b0bd25ca0a93ab85cc18841fe496d6a/transformed/out/jni/arm64-v8a/libfilter.so: Warning: The native library arm64-v8a/libfilter.so (from FilterCamera.core:filter:unspecified) is not 16 KB aligned [Aligned16KB]
+/Users/qihao/.gradle/caches/8.13/transforms/2b0bd25ca0a93ab85cc18841fe496d6a/transformed/out/jni/arm64-v8a/libfilter.so: Warning: The native library arm64-v8a/libfilter.so (from FilterCamera.core:filter:unspecified) is not 16 KB aligned [Aligned16KB]
+/Users/qihao/.gradle/caches/8.13/transforms/119e42b446b15424acdde3967d08a225/transformed/gpuimage-2.1.0/jni/arm64-v8a/libyuv-decoder.so: Warning: The native library arm64-v8a/libyuv-decoder.so (from jp.co.cyberagent.android:gpuimage:2.1.0) is not 16 KB aligned [Aligned16KB]
+/Users/qihao/.gradle/caches/8.13/transforms/119e42b446b15424acdde3967d08a225/transformed/gpuimage-2.1.0/jni/arm64-v8a/libyuv-decoder.so: Warning: The native library arm64-v8a/libyuv-decoder.so (from jp.co.cyberagent.android:gpuimage:2.1.0) is not 16 KB aligned [Aligned16KB]
+/Users/qihao/.gradle/caches/8.13/transforms/119e42b446b15424acdde3967d08a225/transformed/gpuimage-2.1.0/jni/arm64-v8a/libyuv-decoder.so: Warning: The native library arm64-v8a/libyuv-decoder.so (from jp.co.cyberagent.android:gpuimage:2.1.0) is not 16 KB aligned [Aligned16KB]
+
+   Explanation for issues of type "Aligned16KB":
+   Android has traditionally used 4 KB memory page sizes. However, to support
+   future devices that only work with 16 KB aligned libraries apps containing
+   native libraries need to be built with 16 KB alignment.
+
+   Apps with 4 KB aligned native libraries may not work correctly on devices
+   requiring 16 KB alignment. To ensure compatibility and future-proof your
+   app, it is strongly recommended that your native libraries are aligned to
+   16 KB boundaries.
+
+   If your app uses any NDK libraries, directly or indirectly through an SDK,
+   you should rebuild your app to meet this recommendation. Make sure all
+   native libraries within your application, including those from
+   dependencies, are built with 16 KB page alignment.
+
+   This lint check looks at all native libraries that your app depends on. If
+   any are found to be aligned to 4 KB instead of 16 KB, you will need to
+   address this.
+
+   When a library is flagged, first try to update to a newer version that
+   supports 16 KB alignment. If an updated version is not available, contact
+   the library vendor to ask about their plans for 16 KB support and request a
+   compatible version. Updating your libraries proactively will help ensure
+   your app works properly on a wider range of devices.
+
+   https://developer.android.com/guide/practices/page-sizes
+
+0 errors, 5 warnings

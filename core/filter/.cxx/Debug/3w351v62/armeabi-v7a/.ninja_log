@@ -1,0 +1,12 @@
+# ninja log v5
+0	189	1768561485145227706	CMakeFiles/filter.dir/MagicJni.cpp.o	dc9fb079c89d3c3d
+3	201	1768561485155756106	CMakeFiles/filter.dir/bitmap/BitmapOperation.cpp.o	9807a023e4588c5
+5	207	1768561485163906585	CMakeFiles/filter.dir/bitmap/Conversion.cpp.o	e5d40f017cb923c3
+0	310	1768561485260510114	CMakeFiles/filter.dir/beautify/MagicBeautify.cpp.o	8545bfc5882bdd29
+310	355	1768561485309064150	/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/cxx/Debug/3w351v62/obj/armeabi-v7a/libfilter.so	c7f1448e68b924c4
+0	7	0	clean	e89b7fd0cd005fd1
+3	573	1768571222622539442	CMakeFiles/filter.dir/bitmap/BitmapOperation.cpp.o	9807a023e4588c5
+1	574	1768571222621571769	CMakeFiles/filter.dir/MagicJni.cpp.o	dc9fb079c89d3c3d
+5	574	1768571222621633311	CMakeFiles/filter.dir/bitmap/Conversion.cpp.o	e5d40f017cb923c3
+2	629	1768571222682275141	CMakeFiles/filter.dir/beautify/MagicBeautify.cpp.o	8545bfc5882bdd29
+629	796	1768571222847687810	/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/cxx/Debug/3w351v62/obj/armeabi-v7a/libfilter.so	c7f1448e68b924c4

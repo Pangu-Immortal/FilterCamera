@@ -1,0 +1,12 @@
+# ninja log v5
+0	196	1768561485155945399	CMakeFiles/filter.dir/MagicJni.cpp.o	622baab81c593a1c
+5	199	1768561485160224451	CMakeFiles/filter.dir/bitmap/BitmapOperation.cpp.o	5cf99d1bfd91c63a
+6	200	1768561485161834538	CMakeFiles/filter.dir/bitmap/Conversion.cpp.o	d298af4b830564d3
+3	295	1768561485256565687	CMakeFiles/filter.dir/beautify/MagicBeautify.cpp.o	ee9199ab5544e823
+296	354	1768561485315472541	/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/cxx/Debug/3w351v62/obj/arm64-v8a/libfilter.so	e05c60155d26cb35
+0	6	0	clean	e89b7fd0cd005fd1
+1	569	1768571222621758478	CMakeFiles/filter.dir/MagicJni.cpp.o	622baab81c593a1c
+4	570	1768571222623229780	CMakeFiles/filter.dir/bitmap/Conversion.cpp.o	d298af4b830564d3
+2	570	1768571222625311086	CMakeFiles/filter.dir/bitmap/BitmapOperation.cpp.o	5cf99d1bfd91c63a
+2	622	1768571222678816117	CMakeFiles/filter.dir/beautify/MagicBeautify.cpp.o	ee9199ab5544e823
+622	792	1768571222847714310	/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/cxx/Debug/3w351v62/obj/arm64-v8a/libfilter.so	e05c60155d26cb35
