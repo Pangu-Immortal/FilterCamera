@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  colors.xml - 应用颜色资源
+
+  定义Material 3主题颜色和滤镜相关颜色
+
+  @author qihao
+  @since 2.0.0
+-->
 <resources>
+    <!-- Material 3 主题颜色 -->
+    <color name="primary">#FF1976D2</color>
+    <color name="primary_dark">#FF0D47A1</color>
+    <color name="on_primary">#FFFFFFFF</color>
+
+    <color name="secondary">#FF00BCD4</color>
+    <color name="on_secondary">#FFFFFFFF</color>
+
+    <color name="background">#FFFAFAFA</color>
+    <color name="on_background">#FF212121</color>
+
+    <color name="surface">#FFFFFFFF</color>
+    <color name="on_surface">#FF212121</color>
+
+    <color name="error">#FFD32F2F</color>
+
+    <!-- 滤镜相关颜色 -->
     <color name="filter_color_blue">#ff5cbadc</color>
     <color name="filter_color_blue_dark">#3d5afe</color>
     <color name="filter_color_blue_dark_dark">#1e3250</color>

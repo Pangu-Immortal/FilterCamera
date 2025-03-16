@@ -1,0 +1,2272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            String.format(&quot;%.1fx&quot;, zoom)"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/domain/model/CameraSettings.kt"
+            line="198"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            String.format(&quot;%.1fx&quot;, zoom)"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/domain/model/CameraSettings.kt"
+            line="202"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                &quot;平均耗时=${String.format(&quot;%.1f&quot;, averageProcessingTimeMs)}ms, &quot; +"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/data/util/FrameProcessor.kt"
+            line="326"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                &quot;丢帧率=${String.format(&quot;%.2f&quot;, dropRate)}%)&quot;"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/data/util/FrameRingBuffer.kt"
+            line="232"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                ev > 0 -> &quot;+${String.format(&quot;%.1f&quot;, ev)} EV&quot;"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/domain/model/ProModeSettings.kt"
+            line="126"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                ev &lt; 0 -> &quot;${String.format(&quot;%.1f&quot;, ev)} EV&quot;"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/domain/model/ProModeSettings.kt"
+            line="127"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="SelectedPhotoAccess"
+        message="Your app is currently not handling Selected Photos Access introduced in Android 14+"
+        errorLine1="    &lt;uses-permission android:name=&quot;android.permission.READ_MEDIA_IMAGES&quot; />"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="36"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="SelectedPhotoAccess"
+        message="Your app is currently not handling Selected Photos Access introduced in Android 14+"
+        errorLine1="    &lt;uses-permission android:name=&quot;android.permission.READ_MEDIA_VIDEO&quot; />"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="37"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of Gradle than 8.13 is available: 8.14.3"
+        errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/wrapper/gradle-wrapper.properties"
+            line="3"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.application than 8.13.1 is available: 9.0.0. (There is also a newer version of 8.13.𝑥 available, if upgrading to 9.0.0 is difficult: 8.13.2)"
+        errorLine1="agp = &quot;8.13.1&quot;"
+        errorLine2="      ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="3"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.library than 8.13.1 is available: 9.0.0. (There is also a newer version of 8.13.𝑥 available, if upgrading to 9.0.0 is difficult: 8.13.2)"
+        errorLine1="agp = &quot;8.13.1&quot;"
+        errorLine2="      ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="3"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.core:core-ktx than 1.15.0 is available: 1.17.0"
+        errorLine1="coreKtx = &quot;1.15.0&quot;"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="12"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.appcompat:appcompat than 1.7.0 is available: 1.7.1"
+        errorLine1="appcompat = &quot;1.7.0&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="13"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.material:material than 1.12.0 is available: 1.13.0"
+        errorLine1="material = &quot;1.12.0&quot;"
+        errorLine2="           ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="14"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.activity:activity-compose than 1.9.3 is available: 1.12.2"
+        errorLine1="activityCompose = &quot;1.9.3&quot;"
+        errorLine2="                  ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="15"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-runtime-compose than 2.8.7 is available: 2.10.0"
+        errorLine1="lifecycleRuntimeKtx = &quot;2.8.7&quot;"
+        errorLine2="                      ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="16"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.8.7 is available: 2.10.0"
+        errorLine1="lifecycleRuntimeKtx = &quot;2.8.7&quot;"
+        errorLine2="                      ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="16"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-viewmodel-compose than 2.8.7 is available: 2.10.0"
+        errorLine1="lifecycleViewmodelCompose = &quot;2.8.7&quot;"
+        errorLine2="                            ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="17"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose:compose-bom than 2024.12.01 is available: 2026.01.00"
+        errorLine1="composeBom = &quot;2024.12.01&quot;"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="20"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-camera2 than 1.4.1 is available: 1.5.2"
+        errorLine1="camerax = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="24"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-core than 1.4.1 is available: 1.5.2"
+        errorLine1="camerax = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="24"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-lifecycle than 1.4.1 is available: 1.5.2"
+        errorLine1="camerax = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="24"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-video than 1.4.1 is available: 1.5.2"
+        errorLine1="camerax = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="24"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-view than 1.4.1 is available: 1.5.2"
+        errorLine1="camerax = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="24"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-navigation-compose than 1.2.0 is available: 1.3.0"
+        errorLine1="hiltNavigationCompose = &quot;1.2.0&quot;"
+        errorLine2="                        ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="28"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.navigation:navigation-compose than 2.8.5 is available: 2.9.6"
+        errorLine1="navigationCompose = &quot;2.8.5&quot;"
+        errorLine2="                    ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="34"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.datastore:datastore-preferences than 1.1.1 is available: 1.2.0"
+        errorLine1="datastore = &quot;1.1.1&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="46"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.ext:junit than 1.2.1 is available: 1.3.0"
+        errorLine1="junitVersion = &quot;1.2.1&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="53"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.espresso:espresso-core than 3.6.1 is available: 3.7.0"
+        errorLine1="espressoCore = &quot;3.6.1&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="54"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.devtools.ksp than 2.1.0-1.0.29 is available: 2.1.10-1.0.29"
+        errorLine1="ksp = { id = &quot;com.google.devtools.ksp&quot;, version = &quot;2.1.0-1.0.29&quot; }"
+        errorLine2="                                                  ~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="124"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="LockedOrientationActivity"
+        message="Expecting `android:screenOrientation=&quot;unspecified&quot;` or `&quot;fullSensor&quot;` for this activity so the user can use the application in any orientation and provide a great experience on Chrome OS devices"
+        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.android than 2.1.0 is available: 2.3.0"
+        errorLine1="kotlin = &quot;2.1.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="4"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.1.0 is available: 2.3.0"
+        errorLine1="kotlin = &quot;2.1.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="4"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger.hilt.android than 2.54 is available: 2.58"
+        errorLine1="hilt = &quot;2.54&quot;"
+        errorLine2="       ~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="27"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger:hilt-android than 2.54 is available: 2.58"
+        errorLine1="hilt = &quot;2.54&quot;"
+        errorLine2="       ~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="27"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger:hilt-android-compiler than 2.54 is available: 2.58"
+        errorLine1="hilt = &quot;2.54&quot;"
+        errorLine2="       ~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="27"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-android than 1.10.1 is available: 1.10.2"
+        errorLine1="coroutines = &quot;1.10.1&quot;"
+        errorLine2="             ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="31"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-core than 1.10.1 is available: 1.10.2"
+        errorLine1="coroutines = &quot;1.10.1&quot;"
+        errorLine2="             ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="31"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.accompanist:accompanist-permissions than 0.36.0 is available: 0.37.3"
+        errorLine1="accompanist = &quot;0.36.0&quot;"
+        errorLine2="              ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="37"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of io.coil-kt:coil-compose than 2.6.0 is available: 2.7.0"
+        errorLine1="coil = &quot;2.6.0&quot;"
+        errorLine2="       ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="49"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="fun iOSBottomControls("
+        errorLine2="    ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="104"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="private fun iOSModeTabRow("
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="166"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="private fun iOSModeTab("
+        errorLine2="            ~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="fun iOSSwitchCameraButton("
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="223"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="fun iOSShutterButton("
+        errorLine2="    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="255"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="fun iOSFilterToggleButton("
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="319"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="fun iOSFilterSelector("
+        errorLine2="    ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="387"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="private fun iOSFilterGroupTabBar("
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="435"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="private fun iOSFilterGroupTab("
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="459"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="private fun iOSFilterList("
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="499"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposableNaming"
+        message="Composable functions that return Unit should start with an uppercase letter"
+        errorLine1="private fun iOSFilterItem("
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="532"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="395"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/CameraComponents.kt"
+            line="667"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/SettingsPanelComponents.kt"
+            line="348"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/components/SettingsPanelComponents.kt"
+            line="522"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Aligned16KB"
+        message="The native library `arm64-v8a/libfilter.so` (from `FilterCamera.core:filter:unspecified`) is not 16 KB aligned">
+        <location
+            file="$GRADLE_USER_HOME/caches/8.13/transforms/2b0bd25ca0a93ab85cc18841fe496d6a/transformed/out/jni/arm64-v8a/libfilter.so"/>
+    </issue>
+
+    <issue
+        id="Aligned16KB"
+        message="The native library `arm64-v8a/libfilter.so` (from `FilterCamera.core:filter:unspecified`) is not 16 KB aligned">
+        <location
+            file="$GRADLE_USER_HOME/caches/8.13/transforms/2b0bd25ca0a93ab85cc18841fe496d6a/transformed/out/jni/arm64-v8a/libfilter.so"/>
+    </issue>
+
+    <issue
+        id="Aligned16KB"
+        message="The native library `arm64-v8a/libfilter.so` (from `FilterCamera.core:filter:unspecified`) is not 16 KB aligned">
+        <location
+            file="$GRADLE_USER_HOME/caches/8.13/transforms/2b0bd25ca0a93ab85cc18841fe496d6a/transformed/out/jni/arm64-v8a/libfilter.so"/>
+    </issue>
+
+    <issue
+        id="Aligned16KB"
+        message="The native library `arm64-v8a/libyuv-decoder.so` (from `jp.co.cyberagent.android:gpuimage:2.1.0`) is not 16 KB aligned"
+        errorLine1="gpuimage = { group = &quot;jp.co.cyberagent.android&quot;, name = &quot;gpuimage&quot;, version.ref = &quot;gpuimage&quot; }"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/FilterCamera/gradle/libs.versions.toml"
+            line="100"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Aligned16KB"
+        message="The native library `arm64-v8a/libyuv-decoder.so` (from `jp.co.cyberagent.android:gpuimage:2.1.0`) is not 16 KB aligned">
+        <location
+            file="$GRADLE_USER_HOME/caches/8.13/transforms/119e42b446b15424acdde3967d08a225/transformed/gpuimage-2.1.0/jni/arm64-v8a/libyuv-decoder.so"/>
+    </issue>
+
+    <issue
+        id="Aligned16KB"
+        message="The native library `arm64-v8a/libyuv-decoder.so` (from `jp.co.cyberagent.android:gpuimage:2.1.0`) is not 16 KB aligned">
+        <location
+            file="$GRADLE_USER_HOME/caches/8.13/transforms/119e42b446b15424acdde3967d08a225/transformed/gpuimage-2.1.0/jni/arm64-v8a/libyuv-decoder.so"/>
+    </issue>
+
+    <issue
+        id="DiscouragedApi"
+        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
+        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="PxUsage"
+        message="Avoid using `&quot;px&quot;` as units; use `&quot;dp&quot;` instead"
+        errorLine1="    &lt;dimen name=&quot;seekbar_gradient_seek_bar_line_width&quot;>12.0px&lt;/dimen>"
+        errorLine2="                                                       ~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="5"
+            column="56"/>
+    </issue>
+
+    <issue
+        id="PxUsage"
+        message="Avoid using `&quot;px&quot;` as units; use `&quot;dp&quot;` instead"
+        errorLine1="    &lt;dimen name=&quot;seekbar_line_width&quot;>2.0px&lt;/dimen>"
+        errorLine2="                                     ~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="7"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="PxUsage"
+        message="Avoid using `&quot;px&quot;` as units; use `&quot;dp&quot;` instead"
+        errorLine1="    &lt;dimen name=&quot;seekbar_nail_radius&quot;>8.0px&lt;/dimen>"
+        errorLine2="                                      ~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="10"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="PxUsage"
+        message="Avoid using `&quot;px&quot;` as units; use `&quot;dp&quot;` instead"
+        errorLine1="    &lt;dimen name=&quot;seekbar_nail_stroke_width&quot;>2.0px&lt;/dimen>"
+        errorLine2="                                            ~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="11"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="PxUsage"
+        message="Avoid using `&quot;px&quot;` as units; use `&quot;dp&quot;` instead"
+        errorLine1="    &lt;dimen name=&quot;seekbar_thumb_radius&quot;>24.0px&lt;/dimen>"
+        errorLine2="                                       ~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="12"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 23"
+        errorLine1="        &lt;item name=&quot;android:windowLightStatusBar&quot; tools:targetApi=&quot;m&quot;>false&lt;/item>"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/themes.xml"
+            line="38"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.btn_camera_beauty` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/btn_camera_beauty.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.btn_camera_filter` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/btn_camera_filter.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.btn_camera_shutter` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/btn_camera_shutter.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.btn_layout_filters_bar_close` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/btn_layout_filters_bar_close.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.button_take_pic_normal` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/button_take_pic_normal.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.button_take_pic_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/button_take_pic_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_blue` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_blue&quot;>#ff5cbadc&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="28"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_blue_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_blue_dark&quot;>#3d5afe&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="29"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_blue_dark_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_blue_dark_dark&quot;>#1e3250&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="30"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_red` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_red&quot;>#ff6666&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="31"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_red_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_red_dark&quot;>#b93221&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="32"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_orange` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_orange&quot;>#fe9833&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="33"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_pink` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_pink&quot;>#cc99cc&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="34"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_grey_light` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_grey_light&quot;>#c4c4c4&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="35"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_yellow_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_yellow_dark&quot;>#c8ca34&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="36"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_green_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_green_dark&quot;>#568f35&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="37"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_brown_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_brown_dark&quot;>#e69138&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="38"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_brown` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_brown&quot;>#c8ca34&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="39"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.filter_color_brown_light` appears to be unused"
+        errorLine1="    &lt;color name=&quot;filter_color_brown_light&quot;>#ff9933&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="40"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_progress_height` appears to be unused"
+        errorLine1=" &lt;dimen name=&quot;seekbar_progress_height&quot;>3.0dip&lt;/dimen> "
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="2"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_thumb_offset` appears to be unused"
+        errorLine1=" &lt;dimen name=&quot;seekbar_thumb_offset&quot;>6.0dip&lt;/dimen>"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="3"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_button_height` appears to be unused"
+        errorLine1=" &lt;dimen name=&quot;seekbar_button_height&quot;>60.0dip&lt;/dimen>"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="4"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_gradient_seek_bar_line_width` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_gradient_seek_bar_line_width&quot;>12.0px&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="5"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_layout_height` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_layout_height&quot;>220.0dip&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="6"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_line_width` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_line_width&quot;>2.0px&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_margin_left` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_margin_left&quot;>34.0dip&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="8"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_margin_right` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_margin_right&quot;>34.0dip&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="9"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_nail_radius` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_nail_radius&quot;>8.0px&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="10"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_nail_stroke_width` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_nail_stroke_width&quot;>2.0px&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="11"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.seekbar_thumb_radius` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;seekbar_thumb_radius&quot;>24.0px&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="12"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_contrast` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_contrast.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_contrast_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_contrast_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_exposure` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_exposure.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_exposure_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_exposure_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_hdr` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_hdr.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_hdr_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_hdr_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_saturation` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_saturation.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_saturation_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_saturation_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_sharpness` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_sharpness.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_sharpness_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_sharpness_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_vibrance` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_vibrance.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_adjust_vibrance_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_adjust_vibrance_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_done` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_done.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_done_disenable` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_done_disenable.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_bg_done_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_bg_done_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_color_hue` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_color_hue.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.edit_color_hue_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/edit_color_hue_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_1977` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_1977.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_amoro` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_amoro.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_antique` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_antique.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_beauty` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_beauty.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_blackcat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_blackcat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_brannan` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_brannan.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_brooklyn` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_brooklyn.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_calm` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_calm.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_cool` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_cool.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_crayon` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_crayon.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_earlybird` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_earlybird.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_emerald` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_emerald.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_evergreen` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_evergreen.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_fairytale` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_fairytale.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_freud` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_freud.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_healthy` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_healthy.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_hefe` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_hefe.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_hudson` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_hudson.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_inkwell` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_inkwell.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_kevin` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_kevin.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_latte` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_latte.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_lomo` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_lomo.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_nashville` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_nashville.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_nostalgia` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_nostalgia.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_original` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_original.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_piaxr` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_piaxr.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_rise` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_rise.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_romance` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_romance.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_sakura` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_sakura.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_sierra` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_sierra.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_sketch` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_sketch.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_sunrise` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_sunrise.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_sunset` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_sunset.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_sutro` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_sutro.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_sweets` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_sweets.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_tender` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_tender.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_toastero` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_toastero.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_valencia` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_valencia.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_walden` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_walden.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_warm` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_warm.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_whitecat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_whitecat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.filter_thumb_xpro` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_xpro.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_adds` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_adds.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_adds_blue` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_adds_blue.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_auto_beauty` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_auto_beauty.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_auto_beauty_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_auto_beauty_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_cosmesis` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_cosmesis.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_cosmesis_blue` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_cosmesis_blue.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_edit` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_edit.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_edit_blue` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_edit_blue.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_effect` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_effect.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_effect_blue` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_effect_blue.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_frame` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_frame.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_frame_blue` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_frame_blue.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_skinprocess` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_skinprocess.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.i_skinprocess_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/i_skinprocess_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_camera_beauty` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_camera_beauty.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_camera_beauty_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_camera_beauty_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_camera_filter` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_camera_filter.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_collage_layout_filters_bar_close_normal` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_collage_layout_filters_bar_close_normal.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_collage_layout_filters_bar_close_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_collage_layout_filters_bar_close_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.mipmap.ic_launcher` appears to be unused">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_seekbar_smallsize_thumb_light_normal` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_smallsize_thumb_light_normal.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_seekbar_smallsize_thumb_light_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_smallsize_thumb_light_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_seekbar_thumb_light_normal` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_thumb_light_normal.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_seekbar_thumb_light_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_thumb_light_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_seekbar_thumb_normal` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_thumb_normal.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_seekbar_thumb_pressed` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_thumb_pressed.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.icon_camera` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/icon_camera.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.icon_video` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/icon_video.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.mix_gallery_bottom_back_click` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/mix_gallery_bottom_back_click.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.mix_gallery_bottom_back_normal` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/mix_gallery_bottom_back_normal.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.record_camera_switch_normal` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/record_camera_switch_normal.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.record_camera_switch_press` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/record_camera_switch_press.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_bg` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/seekbar_bg.9.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_bg_light` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/seekbar_bg_light.9.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_primary_progress` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/seekbar_primary_progress.9.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_progress` appears to be unused"
+        errorLine1="&lt;layer-list"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/seekbar_progress.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_progress_light` appears to be unused"
+        errorLine1="&lt;layer-list"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/seekbar_progress_light.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_thumb` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/seekbar_thumb.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_thumb_light` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/seekbar_thumb_light.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.seekbar_transparent_bg` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/seekbar_transparent_bg.9.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_filter_favorite_btn` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_filter_favorite_btn.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_filter_selected` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_filter_selected.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_adds` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_adds.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.selector_image_back` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/color/selector_image_back.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_back` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_back.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_beauty` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_beauty.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.selector_image_edit` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/color/selector_image_edit.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit_adjust_bright` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit_adjust_bright.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit_adjust_contrast` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit_adjust_contrast.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit_adjust_exposure` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit_adjust_exposure.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit_adjust_hue` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit_adjust_hue.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit_adjust_saturation` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit_adjust_saturation.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit_adjust_sharpness` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit_adjust_sharpness.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_edit_adjust_vibrance` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_edit_adjust_vibrance.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.selector_image_edit_yellow` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/color/selector_image_edit_yellow.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_filter` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_filter.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_fragment_skin` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_fragment_skin.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_frame` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_frame.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_image_save` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_image_save.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.selector_rewardcamera` appears to be unused"
+        errorLine1="&lt;selector"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/selector_rewardcamera.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.AppBaseTheme` appears to be unused"
+        errorLine1="    &lt;style name=&quot;AppBaseTheme&quot; parent=&quot;android:Theme.Light&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.AppTheme` appears to be unused"
+        errorLine1="    &lt;style name=&quot;AppTheme&quot; parent=&quot;Theme.AppCompat&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="16"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.SeekBar` appears to be unused"
+        errorLine1="    &lt;style name=&quot;SeekBar&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="22"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.SeekBar_Light` appears to be unused"
+        errorLine1="    &lt;style name=&quot;SeekBar.Light&quot; parent=&quot;@style/SeekBar&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="36"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.ImageEditor_radiobutton` appears to be unused"
+        errorLine1="    &lt;style name=&quot;ImageEditor_radiobutton&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="42"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.ImageEditor_adjust_radiobutton` appears to be unused"
+        errorLine1="    &lt;style name=&quot;ImageEditor_adjust_radiobutton&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="51"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.take_filter_confirm_btn_skin_flat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/take_filter_confirm_btn_skin_flat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.take_filter_favorite_btn01_layer00_skin_flat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/take_filter_favorite_btn01_layer00_skin_flat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.take_filter_favorite_btn01_layer01_skin_flat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/take_filter_favorite_btn01_layer01_skin_flat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.take_filter_favorite_btn02_skin_flat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/take_filter_favorite_btn02_skin_flat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.take_filter_favorite_icon01_skin_flat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/take_filter_favorite_icon01_skin_flat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.take_filter_favorite_icon02_skin_flat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/take_filter_favorite_icon02_skin_flat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.take_filter_random_btn_skin_flat` appears to be unused">
+        <location
+            file="src/main/res/drawable-xxhdpi/take_filter_random_btn_skin_flat.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.Theme_FilterCamera_Camera` appears to be unused"
+        errorLine1="    &lt;style name=&quot;Theme.FilterCamera.Camera&quot; parent=&quot;Theme.FilterCamera&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/themes.xml"
+            line="42"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `ic_launcher.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-hdpi/ic_launcher.png: 64x64 dp (96x96 px), drawable-mdpi/ic_launcher.png: 72x72 dp (72x72 px), drawable-xhdpi/ic_launcher.png: 48x48 dp (96x96 px), drawable-xxhdpi/ic_launcher.png: 48x48 dp (144x144 px)">
+        <location
+            file="src/main/res/drawable-xxhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/drawable-xhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/drawable-hdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDensities"
+        message="Missing the following drawables in `drawable-hdpi`: button_take_pic_normal.png, button_take_pic_pressed.png, edit_bg_adjust_contrast.png, edit_bg_adjust_contrast_press.png, edit_bg_adjust_exposure.png... (98 more)">
+        <location
+            file="src/main/res/drawable-hdpi"/>
+    </issue>
+
+    <issue
+        id="IconDensities"
+        message="Missing the following drawables in `drawable-mdpi`: button_take_pic_normal.png, button_take_pic_pressed.png, edit_bg_adjust_contrast.png, edit_bg_adjust_contrast_press.png, edit_bg_adjust_exposure.png... (98 more)">
+        <location
+            file="src/main/res/drawable-mdpi"/>
+    </issue>
+
+    <issue
+        id="IconDensities"
+        message="Missing the following drawables in `drawable-xhdpi`: filter_thumb_1977.jpg, filter_thumb_amoro.jpg, filter_thumb_antique.png, filter_thumb_beauty.png, filter_thumb_blackcat.png... (44 more)">
+        <location
+            file="src/main/res/drawable-xhdpi"/>
+    </issue>
+
+    <issue
+        id="IconDensities"
+        message="Missing the following drawables in `drawable-xxhdpi`: button_take_pic_normal.png, button_take_pic_pressed.png, edit_bg_adjust_contrast.png, edit_bg_adjust_contrast_press.png, edit_bg_adjust_exposure.png... (49 more)">
+        <location
+            file="src/main/res/drawable-xxhdpi"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: filter_thumb_amoro.jpg, filter_thumb_brooklyn.jpg, filter_thumb_earlybird.jpg">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_earlybird.jpg"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_brooklyn.jpg"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_amoro.jpg"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: filter_thumb_1977.jpg, filter_thumb_inkwell.jpg">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_inkwell.jpg"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_1977.jpg"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: filter_thumb_hefe.jpg, filter_thumb_kevin.jpg">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_kevin.jpg"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_hefe.jpg"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: filter_thumb_toastero.jpg, filter_thumb_valencia.jpg">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_valencia.jpg"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_toastero.jpg"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: filter_thumb_nashville.jpg, filter_thumb_xpro.jpg">
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_xpro.jpg"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/filter_thumb_nashville.jpg"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_seekbar_thumb_light_normal.png, ic_seekbar_thumb_normal.png">
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_thumb_normal.png"/>
+        <location
+            file="src/main/res/drawable-xhdpi/ic_seekbar_thumb_light_normal.png"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.scale` instead?"
+        errorLine1="                        val thumbnail = Bitmap.createScaledBitmap(frame, 100, 100, true)"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/CameraViewModel.kt"
+            line="354"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.scale` instead?"
+        errorLine1="            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 320, 240, true)"
+        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/data/processor/DocumentScanProcessor.kt"
+            line="98"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX function `createBitmap` instead?"
+        errorLine1="        val result = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/data/processor/DocumentScanProcessor.kt"
+            line="335"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.scale` instead?"
+        errorLine1="                val scaledBitmap = Bitmap.createScaledBitmap("
+        errorLine2="                                   ^">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/presentation/camera/state/FilterSelectorState.kt"
+            line="213"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="    private val dateFormat = SimpleDateFormat(&quot;yyyyMMdd_HHmmss&quot;, Locale.getDefault())"
+        errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/qihao/filtercamera/data/util/FileUtils.kt"
+            line="43"
+            column="66"/>
+    </issue>
+
+</issues>
