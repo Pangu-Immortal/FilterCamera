@@ -28,19 +28,20 @@ enum class CameraMode(
     val displayName: String,
     val iconName: String
 ) {
-    PHOTO("拍照", "photo_camera"),           // 标准拍照模式
-    VIDEO("录像", "videocam"),               // 视频录制模式
-    PORTRAIT("人像", "portrait"),            // 人像模式（人脸检测+聚焦）
-    DOCUMENT("文档", "document_scanner"),    // 文档扫描模式
-    NIGHT("夜景", "nightlight"),             // 夜景模式（低光优化+降噪）
-    PRO("专业", "tune");                     // 专业手动模式
+    PRO("专业", "tune"),
+    PORTRAIT("人像", "portrait"),
+    PHOTO("拍照", "photo_camera"),
+    VIDEO("录像", "videocam"),
+    TIMELAPSE("延时", "timelapse"),
+    DOCUMENT("文档", "document_scanner"),
+    NIGHT("夜景", "nightlight");
 
     companion object {
         /**
          * 获取所有模式列表（按显示顺序）
          */
         fun getAllModes(): List<CameraMode> = listOf(
-            PHOTO, VIDEO, PORTRAIT, DOCUMENT, NIGHT, PRO
+            PRO, PORTRAIT, PHOTO, VIDEO, TIMELAPSE, DOCUMENT, NIGHT
         )
 
         /**

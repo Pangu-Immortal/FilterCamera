@@ -77,17 +77,18 @@ import com.qihao.filtercamera.domain.model.CameraEvent
 import com.qihao.filtercamera.domain.model.CameraMode
 import com.qihao.filtercamera.domain.model.FilterType
 import com.qihao.filtercamera.presentation.camera.components.BeautySlider
-import com.qihao.filtercamera.presentation.camera.components.CameraTopSection
+import com.qihao.filtercamera.presentation.camera.components.CameraModeSelector
 import com.qihao.filtercamera.presentation.camera.components.CompactHistogramView
 import com.qihao.filtercamera.presentation.camera.components.DocumentBoundsOverlay
 import com.qihao.filtercamera.presentation.camera.components.DocumentModeHint
 import com.qihao.filtercamera.presentation.camera.components.FaceDetectionOverlay
+import com.qihao.filtercamera.presentation.camera.components.NewCameraBottomControls
+import com.qihao.filtercamera.presentation.camera.components.NewCameraTopBar
 import com.qihao.filtercamera.presentation.camera.components.NightModeHint
 import com.qihao.filtercamera.presentation.camera.components.PermissionRequest
 import com.qihao.filtercamera.presentation.camera.components.PortraitModeHint
 import com.qihao.filtercamera.presentation.camera.components.ProModeControlPanel
 import com.qihao.filtercamera.presentation.camera.components.TimerCountdownOverlay
-import com.qihao.filtercamera.presentation.camera.components.XiaomiBottomControls
 import com.qihao.filtercamera.presentation.camera.components.XiaomiCaptureFlash
 import com.qihao.filtercamera.presentation.camera.components.XiaomiFilterButton
 import com.qihao.filtercamera.presentation.camera.components.ZoomIndicator
@@ -245,22 +246,27 @@ private fun CameraContent(
             )
         }
 
-        // 3. 顶部区域：设置面板（箭头展开）
-        CameraTopSection(
-            isPanelExpanded = uiState.isSettingsPanelExpanded,
-            settings = uiState.advancedSettings,
+        NewCameraTopBar(
+            flashMode = uiState.advancedSettings.flashMode,
+            hdrMode = uiState.advancedSettings.hdrMode,
             timerMode = uiState.timerMode,
-            onTogglePanel = viewModel::toggleSettingsPanel,
-            onFlashModeChanged = viewModel::setFlashMode,                // 闪光灯控制回调
-            onHdrModeChanged = viewModel::setHdrMode,
-            onMacroModeChanged = viewModel::setMacroMode,
-            onAspectRatioChanged = viewModel::setAspectRatio,
-            onApertureModeChanged = viewModel::setApertureMode,
-            onTimerModeChanged = viewModel::setTimerMode,
+            aspectRatio = uiState.advancedSettings.aspectRatio,
+            onFlashClick = { viewModel.toggleFlashMode() },
+            onHdrClick = { viewModel.setHdrMode(if (uiState.advancedSettings.hdrMode == HdrMode.ON) HdrMode.OFF else HdrMode.ON) },
+            onTimerClick = { viewModel.toggleTimerMode() },
+            onAspectRatioClick = {
+                val nextAspectRatio = when (uiState.advancedSettings.aspectRatio) {
+                    AspectRatio.RATIO_4_3 -> AspectRatio.RATIO_16_9
+                    AspectRatio.RATIO_16_9 -> AspectRatio.RATIO_1_1
+                    AspectRatio.RATIO_1_1 -> AspectRatio.RATIO_4_3
+                }
+                viewModel.setAspectRatio(nextAspectRatio)
+            },
             onSettingsClick = onNavigateToSettings,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()
+                .padding(top = 16.dp)
         )
 
         // 4. 变焦指示器（始终显示的胶囊）+ 可收回变焦滑块
@@ -475,49 +481,48 @@ private fun CameraContent(
                 )
             }
 
-            // 小米风格底部控制栏
-            XiaomiBottomControls(
-                currentMode = uiState.mode,
-                isRecording = uiState.isRecording,
-                isCapturing = uiState.isCapturing,
-                galleryThumbnail = galleryThumbnail,
-                onModeSelected = viewModel::selectMode,
-                onCapture = {
-                    if (CameraMode.isVideoMode(uiState.mode)) {
-                        viewModel.toggleRecording()
-                    } else {
-                        viewModel.takePhoto()
-                    }
-                },
-                onGalleryClick = {                                        // 打开系统相册
-                    try {
-                        // 方式1：尝试打开系统相册应用
-                        val intent = Intent(Intent.ACTION_PICK).apply {
-                            setDataAndType(
-                                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                "image/*"
-                            )
-                        }
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        // 方式2：如果失败，尝试打开任意图片查看器
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CameraModeSelector(
+                    currentMode = uiState.mode,
+                    onModeSelected = viewModel::selectMode
+                )
+                NewCameraBottomControls(
+                    galleryThumbnail = galleryThumbnail,
+                    onGalleryClick = {
                         try {
-                            val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                            val intent = Intent(Intent.ACTION_PICK).apply {
                                 setDataAndType(
                                     android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                                     "image/*"
                                 )
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
                             }
-                            context.startActivity(fallbackIntent)
-                        } catch (e2: Exception) {
-                            Log.e(TAG, "打开相册失败: ${e2.message}")
-                            Toast.makeText(context, "无法打开相册", Toast.LENGTH_SHORT).show()
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            try {
+                                val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(
+                                        android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                        "image/*"
+                                    )
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(fallbackIntent)
+                            } catch (e2: Exception) {
+                                Log.e(TAG, "打开相册失败: ${e2.message}")
+                                Toast.makeText(context, "无法打开相册", Toast.LENGTH_SHORT).show()
+                            }
                         }
-                    }
-                },
-                onSwitchCamera = viewModel::switchCamera
-            )
+                    },
+                    onShutterClick = {
+                        if (CameraMode.isVideoMode(uiState.mode)) {
+                            viewModel.toggleRecording()
+                        } else {
+                            viewModel.takePhoto()
+                        }
+                    },
+                    onSwitchCameraClick = viewModel::switchCamera
+                )
+            }
         }
     }
 }
