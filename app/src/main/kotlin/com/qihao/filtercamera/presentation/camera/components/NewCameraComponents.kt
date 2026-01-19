@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.FlashAuto
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Highlight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
@@ -69,6 +70,7 @@ fun NewCameraTopBar(
                         FlashMode.ON -> Icons.Default.FlashOn
                         FlashMode.OFF -> Icons.Default.FlashOff
                         FlashMode.AUTO -> Icons.Default.FlashAuto
+                        FlashMode.TORCH -> Icons.Default.Highlight
                     },
                     contentDescription = "Flash",
                     tint = if (flashMode == FlashMode.OFF) Color.White else primaryColor
