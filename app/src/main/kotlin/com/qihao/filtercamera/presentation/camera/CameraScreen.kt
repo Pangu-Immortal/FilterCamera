@@ -76,6 +76,8 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.qihao.filtercamera.domain.model.CameraEvent
 import com.qihao.filtercamera.domain.model.CameraMode
 import com.qihao.filtercamera.domain.model.FilterType
+import com.qihao.filtercamera.domain.model.AspectRatio
+import com.qihao.filtercamera.domain.model.HdrMode
 import com.qihao.filtercamera.presentation.camera.components.BeautySlider
 import com.qihao.filtercamera.presentation.camera.components.CameraModeSelector
 import com.qihao.filtercamera.presentation.camera.components.CompactHistogramView
@@ -89,8 +91,6 @@ import com.qihao.filtercamera.presentation.camera.components.PermissionRequest
 import com.qihao.filtercamera.presentation.camera.components.PortraitModeHint
 import com.qihao.filtercamera.presentation.camera.components.ProModeControlPanel
 import com.qihao.filtercamera.presentation.camera.components.TimerCountdownOverlay
-import com.qihao.filtercamera.presentation.camera.components.XiaomiCaptureFlash
-import com.qihao.filtercamera.presentation.camera.components.XiaomiFilterButton
 import com.qihao.filtercamera.presentation.camera.components.ZoomIndicator
 import com.qihao.filtercamera.presentation.camera.components.ZoomSlider
 import com.qihao.filtercamera.presentation.camera.components.iOSFilterSelector
@@ -257,8 +257,8 @@ private fun CameraContent(
             onAspectRatioClick = {
                 val nextAspectRatio = when (uiState.advancedSettings.aspectRatio) {
                     AspectRatio.RATIO_4_3 -> AspectRatio.RATIO_16_9
-                    AspectRatio.RATIO_16_9 -> AspectRatio.RATIO_1_1
-                    AspectRatio.RATIO_1_1 -> AspectRatio.RATIO_4_3
+                    AspectRatio.RATIO_16_9 -> AspectRatio.RATIO_FULL
+                    AspectRatio.RATIO_FULL -> AspectRatio.RATIO_4_3
                 }
                 viewModel.setAspectRatio(nextAspectRatio)
             },
@@ -326,11 +326,6 @@ private fun CameraContent(
             modifier = Modifier.fillMaxSize()
         )
 
-        // 7. 拍照闪屏动画（覆盖全屏）
-        XiaomiCaptureFlash(
-            isVisible = uiState.isCaptureFlashVisible,
-            modifier = Modifier.fillMaxSize()
-        )
 
         // 8. 人像模式提示（顶部状态栏下方）
         if (uiState.mode == CameraMode.PORTRAIT) {
@@ -413,15 +408,6 @@ private fun CameraContent(
                 )
             }
         }
-
-        // 8. 预览区右侧中间：滤镜按钮（魔法棒图标）
-        XiaomiFilterButton(
-            isActive = uiState.filterType != FilterType.NONE,
-            onClick = viewModel::toggleFilterSelector,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)                               // 右侧居中
-                .padding(end = 16.dp)                                     // 右边距
-        )
 
         // 9. 底部控制区域（包含专业模式面板、滤镜选择器和控制栏）
         Column(
