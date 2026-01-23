@@ -582,55 +582,65 @@ private fun MediaThumbnail(
             }
         }
 
-        // 选择指示器
+        // 选择指示器（触摸目标至少48dp）
         AnimatedVisibility(
             visible = isSelectionMode,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(4.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else Color.White.copy(alpha = 0.7f)
-                    )
+                    .size(48.dp)                                              // 触摸目标48dp
                     .clickable { onClick() },
                 contentAlignment = Alignment.Center
             ) {
-                if (isSelected) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = "已选中",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)                                          // 视觉尺寸24dp
+                        .clip(CircleShape)
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary
+                            else Color.White.copy(alpha = 0.7f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = "已选中",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
 
-        // 收藏指示器（非选择模式时显示在左上角）
+        // 收藏指示器（非选择模式时显示在左上角，触摸目标至少48dp）
         if (!isSelectionMode && isFavorite) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(4.dp)
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .size(48.dp)                                              // 触摸目标48dp
                     .clickable { onToggleFavorite() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Favorite,
-                    contentDescription = "已收藏",
-                    tint = Color.Red,
-                    modifier = Modifier.size(14.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)                                          // 视觉尺寸20dp
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Favorite,
+                        contentDescription = "已收藏",
+                        tint = Color.Red,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
         }
     }

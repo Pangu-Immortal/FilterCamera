@@ -6,7 +6,8 @@
  *
  * 设计原则：
  * - 使用SafeMagicJni安全封装，避免JNI崩溃
- * - 优雅降级：处理失败时返回原图
+ * - 优雅降级：处理失败时返回原图或使用Kotlin实现
+ * - 大图片自动缩放，减少Native内存压力
  * - 详细的性能日志输出
  *
  * @author qihao
@@ -15,6 +16,10 @@
 package com.qihao.filtercamera.data.processor
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.util.Log
 import com.qihao.filtercamera.domain.model.BeautyLevel
 import com.seu.magicfilter.beautify.JniError
@@ -26,6 +31,8 @@ import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * 美颜处理结果
@@ -56,6 +63,13 @@ class BeautyProcessor @Inject constructor() {
         private const val TAG = "BeautyProcessor"         // 日志标签
         private const val WHITE_RATIO = 0.5f              // 美白强度比例
         private const val SMOOTH_RATIO = 0.8f             // 磨皮强度比例
+
+        // Native处理的安全图片尺寸限制（防止内存溢出导致SIGSEGV）
+        private const val MAX_NATIVE_DIMENSION = 1024     // 最大处理边长
+        private const val MAX_NATIVE_PIXELS = 800000      // 最大像素数（约800K）
+
+        // 是否启用Native美颜（设为false则使用纯Kotlin实现）
+        private const val ENABLE_NATIVE_BEAUTY = false    // 禁用Native，防止SIGSEGV崩溃
     }
 
     // 处理互斥锁，确保线程安全
@@ -95,19 +109,6 @@ class BeautyProcessor @Inject constructor() {
             totalProcessCount++
             Log.d(TAG, "processBeauty: 开始处理 #$totalProcessCount beautyLevel=$beautyLevel")
 
-            // 检查Native库状态
-            if (!SafeMagicJni.isLibraryLoaded()) {
-                failureCount++
-                val errorMsg = "Native库未加载，返回原图"
-                Log.w(TAG, "processBeauty: $errorMsg")
-                return@withLock BeautyResult(
-                    bitmap = sourceBitmap,
-                    processingTimeMs = System.currentTimeMillis() - startTime,
-                    success = false,
-                    errorMessage = errorMsg
-                )
-            }
-
             // 确保Bitmap格式正确
             val workBitmap = ensureArgb8888(sourceBitmap)
 
@@ -116,40 +117,164 @@ class BeautyProcessor @Inject constructor() {
             val smoothLevel = beautyLevel.intensity * SMOOTH_RATIO
             Log.d(TAG, "processBeauty: 参数 white=$whiteLevel smooth=$smoothLevel")
 
-            // 使用SafeMagicJni进行处理
-            val result = SafeMagicJni.processBeauty(workBitmap, whiteLevel, smoothLevel)
+            // 使用Kotlin实现的美颜效果（安全，不会崩溃）
+            // 禁用Native美颜以避免SIGSEGV崩溃
+            val resultBitmap = if (ENABLE_NATIVE_BEAUTY && SafeMagicJni.isLibraryLoaded()) {
+                // Native处理（当前禁用）
+                processWithNative(workBitmap, whiteLevel, smoothLevel)
+            } else {
+                // Kotlin纯实现（安全）
+                Log.d(TAG, "processBeauty: 使用Kotlin美颜实现")
+                processWithKotlin(workBitmap, beautyLevel.intensity)
+            }
 
             val processingTime = System.currentTimeMillis() - startTime
 
-            result.fold(
-                onSuccess = { resultBitmap ->
-                    successCount++
-                    Log.d(TAG, "processBeauty: 处理成功 耗时=${processingTime}ms (成功率: ${getSuccessRate()}%)")
-                    BeautyResult(
-                        bitmap = resultBitmap,
-                        processingTimeMs = processingTime,
-                        success = true
-                    )
-                },
-                onFailure = { error ->
-                    failureCount++
-                    val errorMsg = when (error) {
-                        is JniError.LibraryNotLoaded -> "Native库未加载"
-                        is JniError.InvalidParameter -> "参数无效: ${error.message}"
-                        is JniError.NativeCallFailed -> "Native调用失败: ${error.message}"
-                        is JniError.NullResult -> "结果为空: ${error.message}"
-                        else -> "未知错误: ${error.message}"
-                    }
-                    Log.e(TAG, "processBeauty: 处理失败 $errorMsg (成功率: ${getSuccessRate()}%)")
-                    BeautyResult(
-                        bitmap = sourceBitmap,             // 失败时返回原图
-                        processingTimeMs = processingTime,
-                        success = false,
-                        errorMessage = errorMsg
-                    )
-                }
-            )
+            if (resultBitmap != null) {
+                successCount++
+                Log.d(TAG, "processBeauty: 处理成功 耗时=${processingTime}ms (成功率: ${getSuccessRate()}%)")
+                BeautyResult(
+                    bitmap = resultBitmap,
+                    processingTimeMs = processingTime,
+                    success = true
+                )
+            } else {
+                failureCount++
+                Log.w(TAG, "processBeauty: 处理失败，返回原图")
+                BeautyResult(
+                    bitmap = sourceBitmap,
+                    processingTimeMs = processingTime,
+                    success = false,
+                    errorMessage = "美颜处理失败"
+                )
+            }
         }
+    }
+
+    /**
+     * 使用Native库处理美颜（可能崩溃，需要先缩放）
+     */
+    private fun processWithNative(bitmap: Bitmap, whiteLevel: Float, smoothLevel: Float): Bitmap? {
+        // 检查图片尺寸，过大的图片需要先缩放
+        val scaledBitmap = scaleDownIfNeeded(bitmap)
+        val result = SafeMagicJni.processBeauty(scaledBitmap, whiteLevel, smoothLevel)
+
+        return result.fold(
+            onSuccess = { resultBitmap ->
+                // 如果缩放过，需要放大回原尺寸
+                if (scaledBitmap !== bitmap) {
+                    scaleToSize(resultBitmap, bitmap.width, bitmap.height)
+                } else {
+                    resultBitmap
+                }
+            },
+            onFailure = { error ->
+                Log.e(TAG, "processWithNative: 失败 - ${error.message}")
+                null
+            }
+        )
+    }
+
+    /**
+     * 使用纯Kotlin/Android实现的美颜效果
+     * 通过ColorMatrix实现美白和柔化效果
+     *
+     * @param bitmap 源Bitmap
+     * @param intensity 美颜强度 (0.0 - 1.0)
+     * @return 处理后的Bitmap
+     */
+    private fun processWithKotlin(bitmap: Bitmap, intensity: Float): Bitmap {
+        Log.d(TAG, "processWithKotlin: 开始Kotlin美颜处理 intensity=$intensity")
+
+        // 创建输出Bitmap
+        val resultBitmap = Bitmap.createBitmap(
+            bitmap.width,
+            bitmap.height,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(resultBitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        // 1. 美白效果：增加亮度和对比度
+        val whitenMatrix = ColorMatrix().apply {
+            // 亮度增加（美白）
+            val brightness = intensity * 0.15f  // 最大15%亮度增加
+            val brightnessArray = floatArrayOf(
+                1f, 0f, 0f, 0f, brightness * 255,
+                0f, 1f, 0f, 0f, brightness * 255,
+                0f, 0f, 1f, 0f, brightness * 255,
+                0f, 0f, 0f, 1f, 0f
+            )
+            set(brightnessArray)
+        }
+
+        // 2. 饱和度轻微降低（使肤色更柔和）
+        val saturationMatrix = ColorMatrix().apply {
+            setSaturation(1f - intensity * 0.1f)  // 最多降低10%饱和度
+        }
+
+        // 3. 对比度轻微增加（让五官更立体）
+        val contrastMatrix = ColorMatrix().apply {
+            val contrast = 1f + intensity * 0.05f  // 最多增加5%对比度
+            val translate = (1f - contrast) * 128f
+            val contrastArray = floatArrayOf(
+                contrast, 0f, 0f, 0f, translate,
+                0f, contrast, 0f, 0f, translate,
+                0f, 0f, contrast, 0f, translate,
+                0f, 0f, 0f, 1f, 0f
+            )
+            set(contrastArray)
+        }
+
+        // 合并所有效果矩阵
+        val combinedMatrix = ColorMatrix()
+        combinedMatrix.postConcat(whitenMatrix)
+        combinedMatrix.postConcat(saturationMatrix)
+        combinedMatrix.postConcat(contrastMatrix)
+
+        // 应用效果
+        paint.colorFilter = ColorMatrixColorFilter(combinedMatrix)
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+
+        Log.d(TAG, "processWithKotlin: Kotlin美颜处理完成 ${bitmap.width}x${bitmap.height}")
+        return resultBitmap
+    }
+
+    /**
+     * 如果图片过大则缩放（防止Native内存溢出）
+     */
+    private fun scaleDownIfNeeded(bitmap: Bitmap): Bitmap {
+        val pixels = bitmap.width * bitmap.height
+
+        // 检查是否需要缩放
+        if (bitmap.width <= MAX_NATIVE_DIMENSION &&
+            bitmap.height <= MAX_NATIVE_DIMENSION &&
+            pixels <= MAX_NATIVE_PIXELS) {
+            return bitmap
+        }
+
+        // 计算缩放比例
+        val scale = min(
+            MAX_NATIVE_DIMENSION.toFloat() / max(bitmap.width, bitmap.height),
+            kotlin.math.sqrt(MAX_NATIVE_PIXELS.toFloat() / pixels)
+        )
+
+        val newWidth = (bitmap.width * scale).toInt()
+        val newHeight = (bitmap.height * scale).toInt()
+
+        Log.d(TAG, "scaleDownIfNeeded: 缩放图片 ${bitmap.width}x${bitmap.height} -> ${newWidth}x${newHeight}")
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+
+    /**
+     * 缩放Bitmap到指定尺寸
+     */
+    private fun scaleToSize(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+        if (bitmap.width == width && bitmap.height == height) {
+            return bitmap
+        }
+        Log.d(TAG, "scaleToSize: 放大图片 ${bitmap.width}x${bitmap.height} -> ${width}x${height}")
+        return Bitmap.createScaledBitmap(bitmap, width, height, true)
     }
 
     /**

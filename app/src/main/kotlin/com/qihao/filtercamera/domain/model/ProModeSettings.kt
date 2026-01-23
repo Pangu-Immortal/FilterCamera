@@ -9,6 +9,8 @@
  */
 package com.qihao.filtercamera.domain.model
 
+import java.util.Locale
+
 /**
  * 白平衡模式枚举
  */
@@ -123,8 +125,8 @@ data class ProModeSettings(
          */
         fun formatEV(ev: Float): String {
             return when {
-                ev > 0 -> "+${String.format("%.1f", ev)} EV"
-                ev < 0 -> "${String.format("%.1f", ev)} EV"
+                ev > 0 -> "+${String.format(Locale.US, "%.1f", ev)} EV"
+                ev < 0 -> "${String.format(Locale.US, "%.1f", ev)} EV"
                 else -> "0 EV"
             }
         }

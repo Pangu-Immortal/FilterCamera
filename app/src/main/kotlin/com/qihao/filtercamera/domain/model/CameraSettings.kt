@@ -9,6 +9,8 @@
  */
 package com.qihao.filtercamera.domain.model
 
+import java.util.Locale
+
 /**
  * 闪光灯模式枚举
  *
@@ -40,9 +42,10 @@ enum class FlashMode(
         /**
          * 循环切换到下一个模式
          * 用于点击闪光灯按钮时循环切换
+         * 循环顺序: OFF → ON → AUTO → TORCH → OFF
          */
         fun next(current: FlashMode): FlashMode {
-            val modes = listOf(OFF, ON, AUTO)  // 不包含TORCH（手电筒需要单独触发）
+            val modes = listOf(OFF, ON, AUTO, TORCH)                          // 包含所有四种模式
             val currentIndex = modes.indexOf(current)
             return if (currentIndex == -1 || currentIndex == modes.lastIndex) {
                 modes.first()
@@ -70,6 +73,30 @@ enum class HdrMode(
     companion object {
         fun getAll(): List<HdrMode> = entries.toList()
         fun getDefault(): HdrMode = AUTO
+    }
+}
+
+/**
+ * 夜景模式枚举
+ *
+ * 控制夜景拍摄功能：
+ * - 硬件支持时使用CameraX Night扩展
+ * - 硬件不支持时使用软件多帧合成算法
+ *
+ * @param displayName 显示名称
+ * @param isAuto 是否为自动模式
+ */
+enum class NightMode(
+    val displayName: String,
+    val isAuto: Boolean = false
+) {
+    OFF("关闭", false),                                                    // 关闭夜景模式
+    ON("开启", false),                                                     // 强制开启夜景模式
+    AUTO("自动", true);                                                    // 自动检测（低光环境自动启用）
+
+    companion object {
+        fun getAll(): List<NightMode> = entries.toList()
+        fun getDefault(): NightMode = AUTO
     }
 }
 
@@ -110,6 +137,8 @@ enum class AspectRatio(
     val heightRatio: Int,
     val cameraXRatio: Int = androidx.camera.core.AspectRatio.RATIO_4_3  // 默认4:3
 ) {
+    RATIO_1_1("1:1", 1, 1, androidx.camera.core.AspectRatio.RATIO_4_3),        // 正方形1:1（使用4:3裁剪）
+    RATIO_3_2("3:2", 3, 2, androidx.camera.core.AspectRatio.RATIO_4_3),        // 经典3:2（使用4:3裁剪）
     RATIO_4_3("4:3", 4, 3, androidx.camera.core.AspectRatio.RATIO_4_3),        // 标准4:3（CameraX原生）
     RATIO_16_9("16:9", 16, 9, androidx.camera.core.AspectRatio.RATIO_16_9),    // 宽屏16:9（CameraX原生）
     RATIO_FULL("全屏", 0, 0, androidx.camera.core.AspectRatio.RATIO_16_9);     // 全屏（使用16:9填充）
@@ -144,6 +173,21 @@ enum class AspectRatio(
          */
         fun fromDisplayName(displayName: String): AspectRatio {
             return entries.find { it.displayName == displayName } ?: getDefault()
+        }
+
+        /**
+         * 循环切换到下一个画幅比例
+         * 用于点击画幅按钮时循环切换
+         * 循环顺序: 4:3 → 16:9 → 全屏 → 1:1 → 3:2 → 4:3
+         */
+        fun next(current: AspectRatio): AspectRatio {
+            val modes = listOf(RATIO_4_3, RATIO_16_9, RATIO_FULL, RATIO_1_1, RATIO_3_2)
+            val currentIndex = modes.indexOf(current)
+            return if (currentIndex == -1 || currentIndex == modes.lastIndex) {
+                modes.first()
+            } else {
+                modes[currentIndex + 1]
+            }
         }
     }
 }
@@ -195,11 +239,11 @@ object ZoomConfig {
      */
     fun formatZoom(zoom: Float): String {
         return if (zoom < 1f) {
-            String.format("%.1fx", zoom)
+            String.format(Locale.US, "%.1fx", zoom)
         } else if (zoom == zoom.toInt().toFloat()) {
             "${zoom.toInt()}x"
         } else {
-            String.format("%.1fx", zoom)
+            String.format(Locale.US, "%.1fx", zoom)
         }
     }
 }
@@ -253,4 +297,117 @@ data class CameraAdvancedSettings(
      */
     val isTelephotoActive: Boolean
         get() = zoomLevel >= ZoomConfig.TELEPHOTO_THRESHOLD
+}
+
+/**
+ * 人像虚化等级枚举
+ *
+ * 定义人像模式下的背景虚化强度
+ * 使用ML Kit Selfie Segmentation + 高斯模糊实现
+ *
+ * @param displayName 显示名称
+ * @param blurRadius 虚化模糊半径
+ * @param description 等级描述
+ */
+enum class PortraitBlurLevel(
+    val displayName: String,
+    val blurRadius: Float,
+    val description: String
+) {
+    NONE("关闭", 0f, "不应用虚化"),                                             // 关闭虚化
+    LIGHT("轻度", 8f, "轻微虚化，保留背景细节"),                                  // 轻度虚化
+    MEDIUM("中度", 15f, "适中虚化，突出主体"),                                   // 中度虚化（推荐）
+    HEAVY("强力", 25f, "强力虚化，背景全模糊");                                   // 强力虚化
+
+    companion object {
+        fun getAll(): List<PortraitBlurLevel> = entries.toList()
+        fun getDefault(): PortraitBlurLevel = MEDIUM
+
+        /**
+         * 根据显示名称获取等级
+         */
+        fun fromDisplayName(displayName: String): PortraitBlurLevel {
+            return entries.find { it.displayName == displayName } ?: getDefault()
+        }
+    }
+}
+
+/**
+ * 延时摄影设置数据类
+ *
+ * 配置延时摄影的拍摄参数
+ *
+ * @param captureIntervalSec 帧捕获间隔（秒），范围1-60
+ * @param outputFps 输出视频帧率，范围15-60
+ * @param videoWidth 输出视频宽度
+ * @param videoHeight 输出视频高度
+ * @param maxDurationMin 最大拍摄时长（分钟），0表示无限制
+ */
+data class TimelapseSettings(
+    val captureIntervalSec: Int = 3,                                             // 默认3秒/帧
+    val outputFps: Int = 30,                                                     // 默认30fps
+    val videoWidth: Int = 1920,                                                  // 1080p宽度
+    val videoHeight: Int = 1080,                                                 // 1080p高度
+    val maxDurationMin: Int = 0                                                  // 0=无限制
+) {
+    /**
+     * 计算预期的加速倍数
+     * 例如：3秒间隔 + 30fps输出 = 原速的90倍加速
+     */
+    val speedMultiplier: Float
+        get() = captureIntervalSec.toFloat() * outputFps
+
+    /**
+     * 捕获间隔（毫秒）
+     */
+    val captureIntervalMs: Long
+        get() = captureIntervalSec * 1000L
+
+    /**
+     * 最大拍摄时长（毫秒）
+     */
+    val maxDurationMs: Long
+        get() = if (maxDurationMin > 0) maxDurationMin * 60 * 1000L else 0L
+
+    /**
+     * 格式化加速倍数显示
+     */
+    fun formatSpeedMultiplier(): String {
+        return "${speedMultiplier.toInt()}倍速"
+    }
+
+    companion object {
+        /**
+         * 预设配置：标准（3秒间隔）
+         */
+        val PRESET_STANDARD = TimelapseSettings(
+            captureIntervalSec = 3,
+            outputFps = 30
+        )
+
+        /**
+         * 预设配置：快速（1秒间隔）
+         */
+        val PRESET_FAST = TimelapseSettings(
+            captureIntervalSec = 1,
+            outputFps = 30
+        )
+
+        /**
+         * 预设配置：慢速（10秒间隔，适合长时间拍摄）
+         */
+        val PRESET_SLOW = TimelapseSettings(
+            captureIntervalSec = 10,
+            outputFps = 30
+        )
+
+        /**
+         * 获取所有预设
+         */
+        fun getPresets(): List<Pair<String, TimelapseSettings>> = listOf(
+            "快速 (1秒)" to PRESET_FAST,
+            "标准 (3秒)" to PRESET_STANDARD,
+            "慢速 (10秒)" to PRESET_SLOW
+        )
+    }
 }

@@ -1,1 +1,0 @@
-/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/src/main/cpp/CMakeLists.txt

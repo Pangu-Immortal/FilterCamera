@@ -1,7 +1,7 @@
 [versions]
 # 构建工具版本
-agp = "8.13.1"
-kotlin = "2.1.0"
+agp = "9.0.0"
+kotlin = "2.2.10"
 
 # SDK版本
 compileSdk = "36"
@@ -24,7 +24,7 @@ composeCompiler = "1.5.15"
 camerax = "1.4.1"
 
 # Hilt依赖注入
-hilt = "2.54"
+hilt = "2.59"
 hiltNavigationCompose = "1.2.0"
 
 # Kotlin协程
@@ -41,12 +41,16 @@ gpuimage = "2.1.0"
 
 # ML Kit
 mlkitFaceDetection = "16.1.7"
+mlkitSelfieSegmentation = "16.0.0-beta6"
 
 # DataStore
 datastore = "1.1.1"
 
 # Coil图片加载
 coil = "2.6.0"
+
+# RenderScript Toolkit (RenderScript替代方案 - 通过 JitPack)
+renderscriptToolkit = "b6363490c3"
 
 # 测试
 junit = "4.13.2"
@@ -102,12 +106,17 @@ gpuimage = { group = "jp.co.cyberagent.android", name = "gpuimage", version.ref 
 
 # ML Kit人脸检测
 mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkitFaceDetection" }
+# ML Kit人物分割（人像虚化）
+mlkit-selfie-segmentation = { group = "com.google.mlkit", name = "segmentation-selfie", version.ref = "mlkitSelfieSegmentation" }
 
 # DataStore持久化
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Coil图片加载
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# RenderScript Toolkit (RenderScript替代方案 - 高斯模糊 via JitPack)
+renderscript-toolkit = { group = "com.github.android", name = "renderscript-intrinsics-replacement-toolkit", version.ref = "renderscriptToolkit" }
 
 # 测试
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -122,7 +131,7 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-ksp = { id = "com.google.devtools.ksp", version = "2.1.0-1.0.29" }
+ksp = { id = "com.google.devtools.ksp", version = "2.3.2" }
 
 [bundles]
 compose = [

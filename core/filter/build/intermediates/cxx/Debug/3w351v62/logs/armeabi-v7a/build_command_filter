@@ -1,4 +1,0 @@
-/Users/qihao/Library/Android/sdk/cmake/3.22.1/bin/ninja \
-  -C \
-  /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/armeabi-v7a \
-  filter

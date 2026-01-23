@@ -60,6 +60,13 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        // 处理native库冲突
+        // gpuimage预编译的libyuv-decoder.so未对齐16KB
+        // core:filter模块CMake编译了16KB对齐的替代版本
+        // 使用pickFirsts让项目构建的版本优先
+        jniLibs {
+            pickFirsts += "**/libyuv-decoder.so"
+        }
     }
 
     // Lint配置 - 处理实验性API警告
@@ -115,17 +122,24 @@ dependencies {
     // Accompanist权限
     implementation(libs.accompanist.permissions)
 
-    // GPUImage滤镜库
-    implementation(libs.gpuimage)
+    // GPUImage滤镜库 - 通过core:filter模块传递依赖
+    // core:filter模块已包含16KB对齐的native库
+    // 不需要在app中重复声明
 
     // ML Kit人脸检测（人像模式）
     implementation(libs.mlkit.face.detection)
+
+    // ML Kit人物分割（人像虚化）
+    implementation(libs.mlkit.selfie.segmentation)
 
     // DataStore持久化（设置存储）
     implementation(libs.androidx.datastore.preferences)
 
     // Coil图片加载（相册）
     implementation(libs.coil.compose)
+
+    // RenderScript Toolkit (高斯模糊 - 替代已弃用的RenderScript)
+    implementation(libs.renderscript.toolkit)
 
     // 测试
     testImplementation(libs.junit)

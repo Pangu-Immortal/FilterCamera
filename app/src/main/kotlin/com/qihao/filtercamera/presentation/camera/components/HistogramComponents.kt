@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.qihao.filtercamera.presentation.common.theme.CameraTheme
+import com.qihao.filtercamera.presentation.common.theme.rememberResponsiveDimens
 import kotlin.math.max
 
 /**
@@ -179,6 +181,8 @@ fun HistogramView(
     mode: HistogramMode = HistogramMode.RGB,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                  // 响应式尺寸
+
     // 计算各通道的最大值用于归一化
     val maxRed = remember(histogramData.red) { histogramData.red.maxOrNull() ?: 1 }
     val maxGreen = remember(histogramData.green) { histogramData.green.maxOrNull() ?: 1 }
@@ -188,13 +192,13 @@ fun HistogramView(
 
     Box(
         modifier = modifier
-            .width(120.dp)
-            .height(80.dp)
+            .width(dimens.histogramWidth)                                    // 响应式宽度
+            .height(dimens.histogramHeight)                                  // 响应式高度
             .background(
-                color = Color.Black.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(8.dp)
+                color = CameraTheme.Histogram.background,                    // 使用主题色
+                shape = RoundedCornerShape(dimens.radius.small)              // 响应式圆角
             )
-            .padding(4.dp)
+            .padding(dimens.spacing.xs)                                      // 响应式内边距
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val canvasWidth = size.width
@@ -203,24 +207,24 @@ fun HistogramView(
 
             when (mode) {
                 HistogramMode.RGB -> {
-                    // RGB三通道叠加显示
-                    drawHistogramPath(histogramData.red, maxAll, canvasWidth, canvasHeight, Color.Red.copy(alpha = 0.5f), barWidth)
-                    drawHistogramPath(histogramData.green, maxAll, canvasWidth, canvasHeight, Color.Green.copy(alpha = 0.5f), barWidth)
-                    drawHistogramPath(histogramData.blue, maxAll, canvasWidth, canvasHeight, Color.Blue.copy(alpha = 0.5f), barWidth)
+                    // RGB三通道叠加显示 - 使用主题色
+                    drawHistogramPath(histogramData.red, maxAll, canvasWidth, canvasHeight, CameraTheme.Histogram.red.copy(alpha = 0.5f), barWidth)
+                    drawHistogramPath(histogramData.green, maxAll, canvasWidth, canvasHeight, CameraTheme.Histogram.green.copy(alpha = 0.5f), barWidth)
+                    drawHistogramPath(histogramData.blue, maxAll, canvasWidth, canvasHeight, CameraTheme.Histogram.blue.copy(alpha = 0.5f), barWidth)
                 }
                 HistogramMode.LUMINANCE -> {
-                    // 仅亮度显示
-                    drawHistogramPath(histogramData.luminance, maxLum, canvasWidth, canvasHeight, Color.White.copy(alpha = 0.8f), barWidth)
+                    // 仅亮度显示 - 使用主题色
+                    drawHistogramPath(histogramData.luminance, maxLum, canvasWidth, canvasHeight, CameraTheme.Histogram.luminance.copy(alpha = 0.8f), barWidth)
                 }
                 HistogramMode.SEPARATE -> {
                     // 分离显示（仅显示亮度，其他模式可扩展）
-                    drawHistogramPath(histogramData.luminance, maxLum, canvasWidth, canvasHeight, Color.White.copy(alpha = 0.8f), barWidth)
+                    drawHistogramPath(histogramData.luminance, maxLum, canvasWidth, canvasHeight, CameraTheme.Histogram.luminance.copy(alpha = 0.8f), barWidth)
                 }
             }
 
-            // 绘制边框
+            // 绘制边框 - 使用主题色
             drawRect(
-                color = Color.White.copy(alpha = 0.3f),
+                color = CameraTheme.Colors.dividerLight,
                 style = Stroke(width = 1f)
             )
         }
@@ -283,6 +287,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHistogramPath(
 /**
  * 紧凑型直方图组件（用于相机预览角落）
  *
+ * 使用 ResponsiveDimens 实现响应式尺寸
+ *
  * @param histogramData 直方图数据
  * @param modifier 修饰符
  */
@@ -291,11 +297,13 @@ fun CompactHistogramView(
     histogramData: HistogramData,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                  // 响应式尺寸
+
     HistogramView(
         histogramData = histogramData,
         mode = HistogramMode.RGB,
         modifier = modifier
-            .width(100.dp)
-            .height(60.dp)
+            .width(dimens.histogramWidth - 20.dp)                            // 紧凑版宽度
+            .height(dimens.histogramHeight - 12.dp)                          // 紧凑版高度
     )
 }

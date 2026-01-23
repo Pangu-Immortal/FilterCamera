@@ -23,6 +23,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qihao.filtercamera.data.processor.DocumentScanProcessor
 import com.qihao.filtercamera.data.processor.FaceDetectionProcessor
+import com.qihao.filtercamera.data.processor.FaceTrackingFocusCallback
+import com.qihao.filtercamera.data.processor.PortraitBlurProcessor
+import com.qihao.filtercamera.data.processor.TimelapseEngine
+import com.qihao.filtercamera.data.processor.TimelapseState
+import androidx.compose.ui.geometry.Offset
 import com.qihao.filtercamera.domain.model.AdaptiveFocusMode
 import com.qihao.filtercamera.domain.model.ApertureMode
 import com.qihao.filtercamera.domain.model.AspectRatio
@@ -38,6 +43,7 @@ import com.qihao.filtercamera.domain.model.FlashMode
 import com.qihao.filtercamera.domain.model.FocusMode
 import com.qihao.filtercamera.domain.model.HdrMode
 import com.qihao.filtercamera.domain.model.MacroMode
+import com.qihao.filtercamera.domain.model.NightMode
 import com.qihao.filtercamera.domain.model.ProModeSettings
 import com.qihao.filtercamera.domain.model.TimerMode
 import com.qihao.filtercamera.domain.model.WhiteBalanceMode
@@ -57,6 +63,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -73,7 +80,9 @@ private const val TAG = "CameraViewModel"  // 日志标签
 class CameraViewModel @Inject constructor(
     private val useCase: CameraUseCase,
     private val faceDetectionProcessor: FaceDetectionProcessor,
-    private val documentScanProcessor: DocumentScanProcessor
+    private val documentScanProcessor: DocumentScanProcessor,
+    private val timelapseEngine: TimelapseEngine,                     // 延时摄影引擎
+    private val portraitBlurProcessor: PortraitBlurProcessor          // 人像虚化处理器
 ) : ViewModel() {
 
     // ==================== 核心UI状态 ====================
@@ -139,6 +148,17 @@ class CameraViewModel @Inject constructor(
     // 定时拍照协程Job（用于取消倒计时）
     private var timerJob: kotlinx.coroutines.Job? = null
 
+    // 对焦超时Job（3秒后自动隐藏对焦指示器）
+    private var focusTimeoutJob: kotlinx.coroutines.Job? = null
+
+    // 延时摄影帧捕获定时Job
+    private var timelapseJob: kotlinx.coroutines.Job? = null
+
+    // 对焦超时时间（毫秒）
+    private companion object FocusConfig {
+        const val FOCUS_TIMEOUT_MS = 3000L                            // 对焦指示器显示时间
+    }
+
     // 可用滤镜分组（委托给状态管理器）
     val availableGroups: List<FilterGroup> get() = filterSelectorState.availableGroups
 
@@ -153,9 +173,35 @@ class CameraViewModel @Inject constructor(
         observeFilteredFrame()                                        // 观察滤镜帧
         observeRawPreviewFrame()                                      // 观察原始预览帧（用于缩略图生成）
         observeFaceDetection()                                        // 观察人脸检测结果
+        observeFaceTrackingState()                                    // 观察人脸追踪状态
         observeDocumentBounds()                                       // 观察文档边界检测结果
         observeZoomRange()                                            // 观察变焦范围
         observeStateHolders()                                         // 观察状态管理器变化
+        observeNightProcessingProgress()                              // 观察夜景处理进度
+        observeTimelapseProgress()                                    // 观察延时摄影进度
+        observePortraitBlurProgress()                                 // 观察人像虚化处理进度
+        loadInitialGalleryThumbnail()                                 // 加载初始相册缩略图
+    }
+
+    /**
+     * 加载初始相册缩略图
+     *
+     * 在ViewModel初始化时从MediaStore查询最近的照片，
+     * 用于左下角相册预览按钮显示
+     */
+    private fun loadInitialGalleryThumbnail() = viewModelScope.launch(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "loadInitialGalleryThumbnail: 开始加载初始相册缩略图")
+            val thumbnail = useCase.getLatestGalleryThumbnail()       // 查询最新照片缩略图
+            if (thumbnail != null) {
+                _galleryThumbnail.value = thumbnail                   // 更新UI状态
+                Log.d(TAG, "loadInitialGalleryThumbnail: 加载成功 ${thumbnail.width}x${thumbnail.height}")
+            } else {
+                Log.d(TAG, "loadInitialGalleryThumbnail: 相册为空或无权限")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "loadInitialGalleryThumbnail: 加载失败", e)
+        }
     }
 
     /**
@@ -170,6 +216,67 @@ class CameraViewModel @Inject constructor(
                         zoomLevel = state.advancedSettings.zoomLevel.coerceIn(range.minZoom, range.maxZoom)
                     ),
                     zoomRange = range
+                )
+            }
+        }
+    }
+
+    /**
+     * 观察夜景处理进度变化
+     *
+     * 当夜景处理器正在处理时，更新UI显示进度
+     */
+    private fun observeNightProcessingProgress() = viewModelScope.launch {
+        useCase.getNightProcessingProgress().collect { progress ->
+            val isProcessing = progress != null
+            val (stageName, progressValue) = progress ?: ("" to 0f)
+            Log.d(TAG, "observeNightProcessingProgress: isProcessing=$isProcessing, stage=$stageName, progress=$progressValue")
+            _uiState.update { state ->
+                state.copy(
+                    isNightProcessing = isProcessing,
+                    nightProcessingProgress = progressValue
+                )
+            }
+        }
+    }
+
+    /**
+     * 观察延时摄影进度变化
+     *
+     * 更新UI显示已捕获帧数、已用时间、编码进度
+     */
+    private fun observeTimelapseProgress() = viewModelScope.launch {
+        useCase.getTimelapseProgress().collect { (framesCaptured, elapsedMs, encodingProgress) ->
+            val isRecording = useCase.isTimelapseRecording()
+            val isEncoding = encodingProgress > 0f && encodingProgress < 1f
+            Log.d(TAG, "observeTimelapseProgress: frames=$framesCaptured, elapsed=$elapsedMs, encoding=$encodingProgress")
+            _uiState.update { state ->
+                state.copy(
+                    isTimelapseRecording = isRecording,
+                    timelapseFramesCaptured = framesCaptured,
+                    timelapseElapsedMs = elapsedMs,
+                    isTimelapseEncoding = isEncoding,
+                    timelapseEncodingProgress = encodingProgress
+                )
+            }
+        }
+    }
+
+    /**
+     * 观察人像虚化处理进度
+     *
+     * 当人像虚化处理器正在处理时，更新UI显示进度
+     * 用于拍照时显示虚化处理状态
+     */
+    private fun observePortraitBlurProgress() = viewModelScope.launch {
+        portraitBlurProcessor.processingProgress.collect { progress ->
+            val isProcessing = progress != null
+            val (stageName, progressValue) = progress ?: ("" to 0f)
+            Log.d(TAG, "observePortraitBlurProgress: isProcessing=$isProcessing, stage=$stageName, progress=$progressValue")
+            _uiState.update { state ->
+                state.copy(
+                    isPortraitBlurProcessing = isProcessing,
+                    portraitBlurProgress = progressValue
                 )
             }
         }
@@ -276,6 +383,21 @@ class CameraViewModel @Inject constructor(
     private fun observeFaceDetection() = viewModelScope.launch {
         faceDetectionProcessor.detectedFaces.collect { faces ->
             _uiState.update { it.copy(detectedFaces = faces) }
+        }
+    }
+
+    /**
+     * 观察人脸追踪状态（人像模式自动对焦）
+     *
+     * 追踪状态用于UI显示当前追踪状况：
+     * - IDLE: 未检测到人脸
+     * - TRACKING: 正在追踪人脸
+     * - LOST: 人脸追踪丢失
+     */
+    private fun observeFaceTrackingState() = viewModelScope.launch {
+        faceDetectionProcessor.trackingState.collect { state ->
+            Log.d(TAG, "observeFaceTrackingState: 追踪状态变化 state=$state")
+            _uiState.update { it.copy(faceTrackingState = state) }
         }
     }
 
@@ -567,7 +689,13 @@ class CameraViewModel @Inject constructor(
         when (oldMode) {
             CameraMode.PORTRAIT -> {
                 faceDetectionProcessor.disable()
-                _uiState.update { it.copy(detectedFaces = emptyList()) }
+                faceDetectionProcessor.disableTrackingFocus()         // 禁用人脸追踪对焦
+                _uiState.update { it.copy(
+                    detectedFaces = emptyList(),
+                    faceTrackingState = com.qihao.filtercamera.data.processor.FaceTrackingState.IDLE,
+                    isPortraitBlurProcessing = false,
+                    portraitBlurProgress = 0f
+                ) }
             }
             CameraMode.DOCUMENT -> {
                 documentScanProcessor.disable()
@@ -581,6 +709,13 @@ class CameraViewModel @Inject constructor(
             CameraMode.PRO -> {
                 _uiState.update { it.copy(isProPanelVisible = false) }
             }
+            CameraMode.TIMELAPSE -> {
+                // 退出延时摄影模式：取消正在进行的延时摄影
+                if (_uiState.value.isTimelapseRecording) {
+                    cancelTimelapse()
+                    Log.d(TAG, "selectMode: 已取消延时摄影")
+                }
+            }
             else -> {}
         }
 
@@ -588,10 +723,29 @@ class CameraViewModel @Inject constructor(
         when (mode) {
             CameraMode.PORTRAIT -> {
                 faceDetectionProcessor.enable()
-                Log.d(TAG, "selectMode: 启用人脸检测")
+                // 启用人脸追踪对焦：检测到人脸时自动触发对焦
+                faceDetectionProcessor.enableTrackingFocus { x, y ->
+                    Log.d(TAG, "selectMode: 人脸追踪触发对焦 x=$x, y=$y")
+                    onPreviewTouchFocus(x, y)
+                }
+                // 初始化人像虚化处理器
+                initializePortraitBlurProcessor()
+                // 重置人像模式覆盖层可见性
+                _uiState.update { it.copy(isPortraitOverlayVisible = true) }
+                Log.d(TAG, "selectMode: 启用人脸检测、追踪对焦和人像虚化")
             }
             CameraMode.DOCUMENT -> {
                 documentScanProcessor.enable()
+                // 设置自动捕获回调（仅当启用自动捕获时触发）
+                documentScanProcessor.setOnAutoCaptureCallback {
+                    if (_uiState.value.isDocumentAutoCapture) {
+                        Log.d(TAG, "selectMode: 文档边界稳定，触发自动捕获")
+                        // 必须在主线程调用拍照（回调来自后台线程）
+                        viewModelScope.launch(Dispatchers.Main) {
+                            takePhoto()
+                        }
+                    }
+                }
                 Log.d(TAG, "selectMode: 启用文档检测")
             }
             CameraMode.NIGHT -> {
@@ -602,6 +756,19 @@ class CameraViewModel @Inject constructor(
             CameraMode.PRO -> {
                 _uiState.update { it.copy(isProPanelVisible = false) }  // PRO模式默认收起面板
                 Log.d(TAG, "selectMode: 进入专业模式（面板默认收起）")
+            }
+            CameraMode.TIMELAPSE -> {
+                // 延时摄影模式：准备延时摄影引擎
+                Log.d(TAG, "selectMode: 进入延时摄影模式")
+                _uiState.update { state ->
+                    state.copy(
+                        isTimelapseRecording = false,
+                        timelapseFramesCaptured = 0,
+                        timelapseElapsedMs = 0L,
+                        isTimelapseEncoding = false,
+                        timelapseEncodingProgress = 0f
+                    )
+                }
             }
             else -> {}
         }
@@ -615,14 +782,23 @@ class CameraViewModel @Inject constructor(
      * 配置夜景模式参数
      *
      * 夜景模式优化策略：
-     * 1. 提高曝光补偿（使画面更亮）
-     * 2. 启用HDR（如果支持）以增强动态范围
-     * 3. 可选：提高ISO感光度
+     * 1. 启用CameraX Night扩展或软件夜景处理
+     * 2. 提高曝光补偿（使画面更亮）
+     * 3. 启用HDR（如果支持）以增强动态范围
      */
     private fun configureNightMode() {
         viewModelScope.launch {
             try {
                 Log.d(TAG, "configureNightMode: 开始配置夜景模式参数")
+
+                // 启用夜景模式（硬件或软件）
+                useCase.setNightMode(NightMode.ON)
+                    .onSuccess {
+                        Log.d(TAG, "configureNightMode: 夜景模式启用成功")
+                    }
+                    .onFailure { error ->
+                        Log.e(TAG, "configureNightMode: 夜景模式启用失败", error)
+                    }
 
                 // 提高曝光补偿至最大值的70%
                 val (minEv, maxEv, _) = useCase.getExposureCompensationRange()
@@ -637,6 +813,7 @@ class CameraViewModel @Inject constructor(
                 // 更新状态中的高级设置
                 _uiState.update { state ->
                     state.copy(
+                        currentNightMode = NightMode.ON,
                         advancedSettings = state.advancedSettings.copy(
                             hdrMode = HdrMode.ON
                         ),
@@ -663,6 +840,15 @@ class CameraViewModel @Inject constructor(
             try {
                 Log.d(TAG, "resetNightModeSettings: 重置夜景模式参数")
 
+                // 关闭夜景模式
+                useCase.setNightMode(NightMode.OFF)
+                    .onSuccess {
+                        Log.d(TAG, "resetNightModeSettings: 夜景模式已关闭")
+                    }
+                    .onFailure { error ->
+                        Log.e(TAG, "resetNightModeSettings: 关闭夜景模式失败", error)
+                    }
+
                 // 重置曝光补偿为0
                 useCase.setExposureCompensation(0)
 
@@ -672,6 +858,9 @@ class CameraViewModel @Inject constructor(
                 // 更新状态
                 _uiState.update { state ->
                     state.copy(
+                        currentNightMode = NightMode.OFF,
+                        isNightProcessing = false,
+                        nightProcessingProgress = 0f,
                         advancedSettings = state.advancedSettings.copy(
                             hdrMode = HdrMode.OFF
                         ),
@@ -917,7 +1106,8 @@ class CameraViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isSettingsPanelExpanded = false,
-                isZoomSliderVisible = false
+                isZoomSliderVisible = false,
+                isPortraitOverlayVisible = false                          // 隐藏人像模式覆盖层
             )
         }
     }
@@ -932,6 +1122,130 @@ class CameraViewModel @Inject constructor(
     }
 
     /**
+     * 更新对焦指示器位置（仅视觉效果，不触发实际对焦）
+     *
+     * 用于手指拖动时实时跟随手指位置显示对焦框
+     * 实际对焦操作在手指抬起时通过 onPreviewTouchFocus 触发
+     *
+     * @param x 归一化X坐标 (0.0~1.0)
+     * @param y 归一化Y坐标 (0.0~1.0)
+     */
+    fun updateFocusPointPreview(x: Float, y: Float) {
+        Log.d(TAG, "updateFocusPointPreview: 更新对焦预览位置 x=$x, y=$y")
+        // 仅更新视觉位置，不触发对焦
+        _uiState.update {
+            it.copy(
+                focusPoint = Offset(x, y),
+                isFocusing = false                                            // 预览状态，不是正在对焦
+            )
+        }
+    }
+
+    /**
+     * 触摸对焦 - 手指点击屏幕任意位置进行对焦
+     *
+     * 核心功能：用户点击预览区域的任意位置，相机将在该位置进行对焦和测光
+     * 同时显示对焦指示器动画，3秒后自动消失
+     *
+     * @param x 归一化X坐标 (0.0~1.0，0为左边缘，1为右边缘)
+     * @param y 归一化Y坐标 (0.0~1.0，0为上边缘，1为下边缘)
+     */
+    fun onPreviewTouchFocus(x: Float, y: Float) {
+        Log.d(TAG, "onPreviewTouchFocus: 触摸对焦 x=$x, y=$y")
+
+        // 关闭所有弹窗
+        dismissAllPopups()
+
+        // 取消之前的对焦超时Job
+        focusTimeoutJob?.cancel()
+
+        // 更新对焦状态：显示对焦点，标记正在对焦
+        _uiState.update {
+            it.copy(
+                focusPoint = Offset(x, y),
+                isFocusing = true
+            )
+        }
+
+        // 执行实际对焦操作
+        viewModelScope.launch {
+            try {
+                useCase.focusAtPoint(x, y)
+                    .onSuccess {
+                        Log.d(TAG, "onPreviewTouchFocus: 对焦成功")
+                        // 对焦成功后，短暂保持指示器（给用户反馈）
+                        _uiState.update { it.copy(isFocusing = false) }
+                    }
+                    .onFailure { error ->
+                        Log.e(TAG, "onPreviewTouchFocus: 对焦失败", error)
+                        _uiState.update { it.copy(isFocusing = false) }
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "onPreviewTouchFocus: 对焦异常", e)
+                _uiState.update { it.copy(isFocusing = false) }
+            }
+        }
+
+        // 设置对焦超时：3秒后自动隐藏对焦指示器
+        focusTimeoutJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(FOCUS_TIMEOUT_MS)
+            Log.d(TAG, "onPreviewTouchFocus: 对焦超时，隐藏指示器")
+            _uiState.update {
+                it.copy(
+                    focusPoint = null,
+                    isFocusing = false
+                )
+            }
+        }
+    }
+
+    /**
+     * 清除对焦指示器
+     * 用于手动清除对焦点显示
+     */
+    fun clearFocusIndicator() {
+        Log.d(TAG, "clearFocusIndicator: 清除对焦指示器")
+        focusTimeoutJob?.cancel()
+        _uiState.update {
+            it.copy(
+                focusPoint = null,
+                isFocusing = false,
+                focusExposureCompensation = 0f                        // 重置曝光补偿
+            )
+        }
+    }
+
+    /**
+     * 设置触摸对焦曝光补偿
+     *
+     * 用于聚焦框右侧的亮度调节滑块
+     * 范围：-1.0（最暗）到 1.0（最亮）
+     *
+     * @param value 曝光补偿值（-1.0 ~ 1.0）
+     */
+    fun setFocusExposureCompensation(value: Float) {
+        Log.d(TAG, "setFocusExposureCompensation: value=$value")
+        val clampedValue = value.coerceIn(-1f, 1f)                    // 限制范围
+        _uiState.update { it.copy(focusExposureCompensation = clampedValue) }
+
+        // 应用到相机曝光（将-1~1映射到相机的曝光补偿范围）
+        viewModelScope.launch {
+            try {
+                val (minEv, maxEv, _) = useCase.getExposureCompensationRange()
+                val mappedEv = if (clampedValue >= 0) {
+                    (clampedValue * maxEv).toInt()                    // 正值映射到 0~maxEv
+                } else {
+                    (clampedValue * -minEv).toInt()                   // 负值映射到 minEv~0
+                }
+                useCase.setExposureCompensation(mappedEv)
+                Log.d(TAG, "setFocusExposureCompensation: 映射后EV=$mappedEv")
+            } catch (e: Exception) {
+                Log.e(TAG, "setFocusExposureCompensation: 设置失败", e)
+            }
+        }
+    }
+
+    /**
      * 设置HDR模式
      */
     fun setHdrMode(mode: HdrMode) {
@@ -942,6 +1256,34 @@ class CameraViewModel @Inject constructor(
         // 应用到相机
         viewModelScope.launch {
             useCase.setHdrMode(mode)
+        }
+    }
+
+    /**
+     * 设置夜景模式
+     *
+     * 夜景模式会触发：
+     * - 硬件支持时：使用CameraX Night扩展（设备原生夜景算法）
+     * - 硬件不支持时：使用软件多帧合成（NightModeProcessor）
+     * - AUTO模式：根据环境光自动判断是否启用
+     *
+     * @param mode 夜景模式（OFF/ON/AUTO）
+     */
+    fun setNightMode(mode: NightMode) {
+        Log.d(TAG, "setNightMode: mode=${mode.displayName}")
+        _uiState.update {
+            it.copy(currentNightMode = mode)
+        }
+        // 应用到相机
+        viewModelScope.launch {
+            useCase.setNightMode(mode)
+                .onSuccess {
+                    Log.d(TAG, "setNightMode: 设置成功")
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "setNightMode: 设置失败", error)
+                    _events.emit(CameraEvent.Error("夜景模式设置失败: ${error.message}"))
+                }
         }
     }
 
@@ -1064,6 +1406,416 @@ class CameraViewModel @Inject constructor(
      */
     fun getCurrentFlashMode(): FlashMode = useCase.getCurrentFlashMode()
 
+    // ==================== 人像虚化控制 ====================
+
+    /**
+     * 初始化人像虚化处理器
+     *
+     * 在进入人像模式时调用，准备虚化处理资源
+     */
+    private fun initializePortraitBlurProcessor() {
+        viewModelScope.launch {
+            portraitBlurProcessor.initialize()
+                .onSuccess {
+                    Log.d(TAG, "initializePortraitBlurProcessor: 人像虚化处理器初始化成功")
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "initializePortraitBlurProcessor: 初始化失败", error)
+                }
+        }
+    }
+
+    /**
+     * 设置人像虚化等级
+     *
+     * @param level 虚化等级（NONE/LIGHT/MEDIUM/HEAVY）
+     */
+    fun setPortraitBlurLevel(level: com.qihao.filtercamera.domain.model.PortraitBlurLevel) {
+        Log.d(TAG, "setPortraitBlurLevel: 设置虚化等级=${level.displayName}")
+        _uiState.update { it.copy(portraitBlurLevel = level) }
+        // 同步到Repository
+        viewModelScope.launch {
+            useCase.setPortraitBlurLevel(level)
+                .onFailure { error ->
+                    Log.e(TAG, "setPortraitBlurLevel: 设置失败", error)
+                    _events.emit(CameraEvent.Error("虚化等级设置失败: ${error.message}"))
+                }
+        }
+    }
+
+    /**
+     * 获取当前人像虚化等级
+     *
+     * @return 当前虚化等级
+     */
+    fun getPortraitBlurLevel(): com.qihao.filtercamera.domain.model.PortraitBlurLevel =
+        _uiState.value.portraitBlurLevel
+
+    /**
+     * 切换人像模式覆盖层可见性
+     * 在人像模式下，点击屏幕可隐藏覆盖层，再次点击可显示
+     */
+    fun togglePortraitOverlay() {
+        val newVisible = !_uiState.value.isPortraitOverlayVisible
+        Log.d(TAG, "togglePortraitOverlay: 切换人像覆盖层可见性=$newVisible")
+        _uiState.update { it.copy(isPortraitOverlayVisible = newVisible) }
+    }
+
+    /**
+     * 显示人像模式覆盖层
+     */
+    fun showPortraitOverlay() {
+        Log.d(TAG, "showPortraitOverlay: 显示人像覆盖层")
+        _uiState.update { it.copy(isPortraitOverlayVisible = true) }
+    }
+
+    /**
+     * 循环切换人像虚化等级
+     *
+     * 切换顺序：NONE -> LIGHT -> MEDIUM -> HEAVY -> NONE
+     */
+    fun togglePortraitBlurLevel() {
+        val currentLevel = _uiState.value.portraitBlurLevel
+        val levels = com.qihao.filtercamera.domain.model.PortraitBlurLevel.getAll()
+        val currentIndex = levels.indexOf(currentLevel)
+        val nextLevel = levels[(currentIndex + 1) % levels.size]
+        Log.d(TAG, "togglePortraitBlurLevel: ${currentLevel.displayName} -> ${nextLevel.displayName}")
+        setPortraitBlurLevel(nextLevel)
+    }
+
+    /**
+     * 对Bitmap应用人像虚化效果
+     *
+     * 用于拍照后处理或实时预览
+     *
+     * @param bitmap 源图像
+     * @return 虚化处理后的图像
+     */
+    suspend fun applyPortraitBlur(bitmap: Bitmap): Bitmap {
+        val blurLevel = _uiState.value.portraitBlurLevel
+        if (blurLevel == com.qihao.filtercamera.domain.model.PortraitBlurLevel.NONE) {
+            Log.d(TAG, "applyPortraitBlur: 虚化等级为NONE，跳过处理")
+            return bitmap
+        }
+
+        Log.d(TAG, "applyPortraitBlur: 应用人像虚化 level=${blurLevel.displayName}")
+        val result = portraitBlurProcessor.processPortraitBlur(
+            bitmap,
+            com.qihao.filtercamera.data.processor.PortraitBlurConfig(
+                blurRadius = blurLevel.blurRadius,
+                edgeSmooth = 0.5f,
+                foregroundThreshold = 0.5f
+            )
+        )
+
+        return if (result.success && result.hasPerson) {
+            Log.d(TAG, "applyPortraitBlur: 虚化处理成功 耗时=${result.processingTimeMs}ms")
+            result.bitmap
+        } else {
+            Log.d(TAG, "applyPortraitBlur: 未检测到人物或处理失败，返回原图")
+            bitmap
+        }
+    }
+
+    /**
+     * 检查人像虚化处理器是否就绪
+     *
+     * @return true表示处理器已初始化就绪
+     */
+    fun isPortraitBlurReady(): Boolean = portraitBlurProcessor.isReady()
+
+    // ==================== 人脸追踪对焦控制 ====================
+
+    /**
+     * 获取当前人脸追踪状态
+     *
+     * @return 当前追踪状态（IDLE/TRACKING/LOST）
+     */
+    fun getFaceTrackingState(): com.qihao.filtercamera.data.processor.FaceTrackingState =
+        _uiState.value.faceTrackingState
+
+    /**
+     * 检查是否正在追踪人脸
+     *
+     * @return true表示正在追踪人脸
+     */
+    fun isTrackingFace(): Boolean =
+        _uiState.value.faceTrackingState == com.qihao.filtercamera.data.processor.FaceTrackingState.TRACKING
+
+    /**
+     * 手动启用人脸追踪对焦
+     *
+     * 在人像模式下启用自动追踪人脸并对焦
+     * 注意：进入PORTRAIT模式时会自动启用，通常无需手动调用
+     */
+    fun enableFaceTrackingFocus() {
+        Log.d(TAG, "enableFaceTrackingFocus: 手动启用人脸追踪对焦")
+        faceDetectionProcessor.enableTrackingFocus { x, y ->
+            Log.d(TAG, "enableFaceTrackingFocus: 追踪对焦触发 x=$x, y=$y")
+            onPreviewTouchFocus(x, y)
+        }
+    }
+
+    /**
+     * 手动禁用人脸追踪对焦
+     *
+     * 禁用后将不再自动追踪人脸对焦，但仍会检测人脸用于UI显示
+     */
+    fun disableFaceTrackingFocus() {
+        Log.d(TAG, "disableFaceTrackingFocus: 手动禁用人脸追踪对焦")
+        faceDetectionProcessor.disableTrackingFocus()
+        _uiState.update { it.copy(faceTrackingState = com.qihao.filtercamera.data.processor.FaceTrackingState.IDLE) }
+    }
+
+    /**
+     * 切换人脸追踪对焦开关
+     *
+     * 用于UI上的追踪对焦开关按钮
+     *
+     * @return 切换后的状态（true=已启用，false=已禁用）
+     */
+    fun toggleFaceTrackingFocus(): Boolean {
+        val wasTracking = _uiState.value.faceTrackingState != com.qihao.filtercamera.data.processor.FaceTrackingState.IDLE
+        return if (wasTracking) {
+            disableFaceTrackingFocus()
+            false
+        } else {
+            enableFaceTrackingFocus()
+            true
+        }
+    }
+
+    // ==================== 延时摄影控制 ====================
+
+    /**
+     * 开始延时摄影录制
+     *
+     * 使用默认配置（3秒间隔，30fps输出，1080p）开始延时摄影
+     * 自动启动帧捕获定时器
+     *
+     * @param settings 延时摄影配置，null使用默认配置
+     */
+    fun startTimelapse(settings: com.qihao.filtercamera.domain.model.TimelapseSettings? = null) {
+        if (_uiState.value.isTimelapseRecording) {
+            Log.w(TAG, "startTimelapse: 已在延时摄影录制中，忽略请求")
+            return
+        }
+
+        val config = settings ?: com.qihao.filtercamera.domain.model.TimelapseSettings.PRESET_STANDARD
+        Log.d(TAG, "startTimelapse: 开始延时摄影 interval=${config.captureIntervalSec}s, fps=${config.outputFps}")
+
+        viewModelScope.launch {
+            useCase.startTimelapse(config)
+                .onSuccess {
+                    Log.d(TAG, "startTimelapse: 延时摄影引擎启动成功")
+                    _uiState.update { state ->
+                        state.copy(
+                            isTimelapseRecording = true,
+                            timelapseFramesCaptured = 0,
+                            timelapseElapsedMs = 0L,
+                            isTimelapseEncoding = false,
+                            timelapseEncodingProgress = 0f
+                        )
+                    }
+                    // 启动帧捕获定时器
+                    startTimelapseFrameCapture(config.captureIntervalMs)
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "startTimelapse: 延时摄影启动失败", error)
+                    _events.emit(CameraEvent.Error("延时摄影启动失败: ${error.message}"))
+                }
+        }
+    }
+
+    /**
+     * 启动延时摄影帧捕获定时器
+     *
+     * 按配置间隔捕获预览帧并添加到引擎
+     *
+     * @param intervalMs 捕获间隔（毫秒）
+     */
+    private fun startTimelapseFrameCapture(intervalMs: Long) {
+        // 取消之前的Job
+        timelapseJob?.cancel()
+
+        timelapseJob = viewModelScope.launch {
+            Log.d(TAG, "startTimelapseFrameCapture: 启动帧捕获定时器 interval=${intervalMs}ms")
+            val startTime = System.currentTimeMillis()
+
+            while (_uiState.value.isTimelapseRecording) {
+                // 捕获当前预览帧
+                val frame = currentPreviewFrame
+                if (frame != null) {
+                    val frameCopy = frame.copy(frame.config ?: Bitmap.Config.ARGB_8888, false)
+                    val addResult = timelapseEngine.addFrame(frameCopy)
+                    if (addResult.isSuccess) {
+                        val elapsed = System.currentTimeMillis() - startTime
+                        _uiState.update { state ->
+                            state.copy(
+                                timelapseFramesCaptured = state.timelapseFramesCaptured + 1,
+                                timelapseElapsedMs = elapsed
+                            )
+                        }
+                        Log.d(TAG, "startTimelapseFrameCapture: 帧捕获成功 frames=${_uiState.value.timelapseFramesCaptured}")
+                    }
+                } else {
+                    Log.w(TAG, "startTimelapseFrameCapture: 当前无预览帧可捕获")
+                }
+
+                // 等待下一次捕获
+                kotlinx.coroutines.delay(intervalMs)
+            }
+            Log.d(TAG, "startTimelapseFrameCapture: 帧捕获定时器已停止")
+        }
+    }
+
+    /**
+     * 停止延时摄影并编码输出视频
+     *
+     * 停止帧捕获，将帧序列编码为MP4视频
+     */
+    fun stopTimelapse() {
+        if (!_uiState.value.isTimelapseRecording) {
+            Log.w(TAG, "stopTimelapse: 未在延时摄影录制中，忽略请求")
+            return
+        }
+
+        Log.d(TAG, "stopTimelapse: 停止延时摄影并编码")
+        // 停止帧捕获
+        timelapseJob?.cancel()
+        timelapseJob = null
+
+        // 更新状态为编码中
+        _uiState.update { state ->
+            state.copy(
+                isTimelapseRecording = false,
+                isTimelapseEncoding = true,
+                timelapseEncodingProgress = 0f
+            )
+        }
+
+        viewModelScope.launch {
+            useCase.stopTimelapse()
+                .onSuccess { videoPath ->
+                    Log.d(TAG, "stopTimelapse: 延时摄影视频编码完成 path=$videoPath")
+                    _uiState.update { state ->
+                        state.copy(
+                            isTimelapseEncoding = false,
+                            timelapseEncodingProgress = 1f
+                        )
+                    }
+                    _events.emit(CameraEvent.VideoRecorded(videoPath))
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "stopTimelapse: 延时摄影编码失败", error)
+                    _uiState.update { state ->
+                        state.copy(
+                            isTimelapseEncoding = false,
+                            timelapseEncodingProgress = 0f
+                        )
+                    }
+                    _events.emit(CameraEvent.Error("延时摄影编码失败: ${error.message}"))
+                }
+        }
+    }
+
+    /**
+     * 取消延时摄影（不生成视频）
+     *
+     * 丢弃已捕获的帧，不生成输出视频
+     */
+    fun cancelTimelapse() {
+        Log.d(TAG, "cancelTimelapse: 取消延时摄影")
+        // 停止帧捕获
+        timelapseJob?.cancel()
+        timelapseJob = null
+
+        // 重置状态
+        _uiState.update { state ->
+            state.copy(
+                isTimelapseRecording = false,
+                timelapseFramesCaptured = 0,
+                timelapseElapsedMs = 0L,
+                isTimelapseEncoding = false,
+                timelapseEncodingProgress = 0f
+            )
+        }
+
+        viewModelScope.launch {
+            useCase.cancelTimelapse()
+                .onFailure { error ->
+                    Log.e(TAG, "cancelTimelapse: 取消延时摄影失败", error)
+                }
+        }
+    }
+
+    /**
+     * 暂停延时摄影
+     *
+     * 暂停帧捕获，保留已捕获的帧
+     */
+    fun pauseTimelapse() {
+        if (!_uiState.value.isTimelapseRecording) {
+            Log.w(TAG, "pauseTimelapse: 未在延时摄影录制中，忽略请求")
+            return
+        }
+
+        Log.d(TAG, "pauseTimelapse: 暂停延时摄影")
+        // 停止帧捕获定时器（但不清除已捕获的帧）
+        timelapseJob?.cancel()
+        timelapseJob = null
+
+        viewModelScope.launch {
+            useCase.pauseTimelapse()
+                .onSuccess {
+                    Log.d(TAG, "pauseTimelapse: 暂停成功")
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "pauseTimelapse: 暂停失败", error)
+                }
+        }
+    }
+
+    /**
+     * 恢复延时摄影
+     *
+     * 恢复帧捕获
+     */
+    fun resumeTimelapse(intervalMs: Long = 3000L) {
+        if (_uiState.value.isTimelapseRecording && timelapseJob?.isActive == true) {
+            Log.w(TAG, "resumeTimelapse: 已在录制中，忽略请求")
+            return
+        }
+
+        Log.d(TAG, "resumeTimelapse: 恢复延时摄影")
+        viewModelScope.launch {
+            useCase.resumeTimelapse()
+                .onSuccess {
+                    Log.d(TAG, "resumeTimelapse: 恢复成功")
+                    _uiState.update { it.copy(isTimelapseRecording = true) }
+                    // 重新启动帧捕获定时器
+                    startTimelapseFrameCapture(intervalMs)
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "resumeTimelapse: 恢复失败", error)
+                    _events.emit(CameraEvent.Error("延时摄影恢复失败: ${error.message}"))
+                }
+        }
+    }
+
+    /**
+     * 切换延时摄影录制状态
+     *
+     * 便捷方法：如果正在录制则停止，否则开始录制
+     */
+    fun toggleTimelapse() {
+        if (_uiState.value.isTimelapseRecording) {
+            stopTimelapse()
+        } else {
+            startTimelapse()
+        }
+    }
+
     // ==================== 自适应对焦 ====================
 
     /**
@@ -1100,6 +1852,104 @@ class CameraViewModel @Inject constructor(
         }
     }
 
+    // ==================== 文档扫描模式控制 ====================
+
+    /**
+     * 设置文档扫描模式
+     *
+     * 设置文档扫描时使用的效果模式
+     * 更新状态并应用到文档处理器
+     *
+     * @param mode 文档扫描模式
+     */
+    fun setDocumentScanMode(mode: com.qihao.filtercamera.data.processor.DocumentScanMode) {
+        Log.d(TAG, "setDocumentScanMode: 切换扫描模式 -> ${mode.displayName}")
+        _uiState.update { it.copy(documentScanMode = mode) }
+        // 通知文档处理器切换模式（如果有实时预览需求）
+        documentScanProcessor.setDefaultScanMode(mode)
+    }
+
+    /**
+     * 切换到下一个文档扫描模式
+     *
+     * 循环切换：彩色 -> 灰度 -> 黑白 -> 自动增强 -> OCR就绪 -> 彩色
+     *
+     * @return 新的扫描模式
+     */
+    fun toggleDocumentScanMode(): com.qihao.filtercamera.data.processor.DocumentScanMode {
+        val currentMode = _uiState.value.documentScanMode
+        val modes = com.qihao.filtercamera.data.processor.DocumentScanMode.entries.toList()
+        val currentIndex = modes.indexOf(currentMode)
+        val nextIndex = (currentIndex + 1) % modes.size
+        val nextMode = modes[nextIndex]
+        Log.d(TAG, "toggleDocumentScanMode: ${currentMode.displayName} -> ${nextMode.displayName}")
+        setDocumentScanMode(nextMode)
+        return nextMode
+    }
+
+    /**
+     * 获取当前文档扫描模式
+     *
+     * @return 当前扫描模式
+     */
+    fun getDocumentScanMode(): com.qihao.filtercamera.data.processor.DocumentScanMode =
+        _uiState.value.documentScanMode
+
+    /**
+     * 切换文档自动捕获开关
+     *
+     * 开启时：检测到稳定的文档边界后自动拍照
+     * 关闭时：手动点击拍照按钮
+     *
+     * @return 新的自动捕获状态
+     */
+    fun toggleDocumentAutoCapture(): Boolean {
+        val newState = !_uiState.value.isDocumentAutoCapture
+        Log.d(TAG, "toggleDocumentAutoCapture: 自动捕获 -> $newState")
+        _uiState.update { it.copy(isDocumentAutoCapture = newState) }
+        return newState
+    }
+
+    /**
+     * 设置文档自动捕获状态
+     *
+     * @param enabled 是否启用自动捕获
+     */
+    fun setDocumentAutoCapture(enabled: Boolean) {
+        Log.d(TAG, "setDocumentAutoCapture: 自动捕获 -> $enabled")
+        _uiState.update { it.copy(isDocumentAutoCapture = enabled) }
+    }
+
+    /**
+     * 获取文档自动捕获状态
+     *
+     * @return 是否启用自动捕获
+     */
+    fun isDocumentAutoCaptureEnabled(): Boolean =
+        _uiState.value.isDocumentAutoCapture
+
+    /**
+     * 显示/隐藏文档扫描模式选择器
+     *
+     * @param visible 是否可见
+     */
+    fun showDocumentScanModeSelector(visible: Boolean) {
+        Log.d(TAG, "showDocumentScanModeSelector: 选择器可见性 -> $visible")
+        _uiState.update { it.copy(isDocumentScanModeSelectorVisible = visible) }
+    }
+
+    /**
+     * 切换文档扫描模式选择器可见性
+     *
+     * @return 新的可见性状态
+     */
+    fun toggleDocumentScanModeSelector(): Boolean {
+        val newState = !_uiState.value.isDocumentScanModeSelectorVisible
+        Log.d(TAG, "toggleDocumentScanModeSelector: 选择器可见性 -> $newState")
+        _uiState.update { it.copy(isDocumentScanModeSelectorVisible = newState) }
+        return newState
+    }
+
     // ==================== 错误处理 ====================
 
     /**
@@ -1115,10 +1965,14 @@ class CameraViewModel @Inject constructor(
         super.onCleared()
         Log.d(TAG, "onCleared: 释放资源")
         timerJob?.cancel()                                                // 取消定时拍照倒计时
+        focusTimeoutJob?.cancel()                                         // 取消对焦超时Job
+        timelapseJob?.cancel()                                            // 取消延时摄影帧捕获Job
         faceDetectionProcessor.release()
         documentScanProcessor.release()
+        portraitBlurProcessor.release()                                   // 释放人像虚化处理器
         filterSelectorState.release()                                 // 释放滤镜选择器资源
         Log.d(TAG, "onCleared: 状态管理器摘要 - Pro: ${proModeState.getSettingsSummary()}")
         Log.d(TAG, "onCleared: 状态管理器摘要 - Filter: ${filterSelectorState.getStateSummary()}")
+        Log.d(TAG, "onCleared: 人像虚化统计 - ${portraitBlurProcessor.getStatistics()}")
     }
 }

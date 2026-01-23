@@ -9,6 +9,9 @@
  */
 package com.qihao.filtercamera.domain.model
 
+import androidx.compose.ui.geometry.Offset
+import com.qihao.filtercamera.data.processor.DocumentScanMode
+import com.qihao.filtercamera.data.processor.FaceTrackingState
 import com.qihao.filtercamera.domain.repository.ZoomRange
 
 /**
@@ -39,9 +42,10 @@ enum class CameraMode(
     companion object {
         /**
          * 获取所有模式列表（按显示顺序）
+         * 注：TIMELAPSE已移除，不在UI中显示
          */
         fun getAllModes(): List<CameraMode> = listOf(
-            PRO, PORTRAIT, PHOTO, VIDEO, TIMELAPSE, DOCUMENT, NIGHT
+            PRO, PORTRAIT, PHOTO, VIDEO, DOCUMENT, NIGHT
         )
 
         /**
@@ -79,6 +83,11 @@ enum class CameraMode(
          * 判断是否为夜景模式
          */
         fun isNightMode(mode: CameraMode): Boolean = mode == NIGHT
+
+        /**
+         * 判断是否为延时摄影模式
+         */
+        fun isTimelapseMode(mode: CameraMode): Boolean = mode == TIMELAPSE
     }
 }
 
@@ -114,6 +123,8 @@ enum class CameraLens {
  * @param detectedFaces 检测到的人脸列表（人像模式）
  * @param documentBounds 检测到的文档边界（文档模式）
  * @param isHistogramVisible 直方图是否可见（专业模式下显示实时直方图）
+ * @param focusPoint 当前对焦点位置（归一化坐标0.0~1.0，null表示无对焦点显示）
+ * @param isFocusing 是否正在对焦中（用于显示对焦动画）
  * @param errorMessage 错误信息（如有）
  */
 data class CameraState(
@@ -133,12 +144,31 @@ data class CameraState(
     val timerMode: TimerMode = TimerMode.OFF,                         // 定时拍照模式
     val countdownSeconds: Int = 0,                                    // 倒计时剩余秒数
     val isCountingDown: Boolean = false,                              // 是否正在倒计时
+    val currentNightMode: NightMode = NightMode.OFF,                  // 当前夜景模式状态
+    val isNightProcessing: Boolean = false,                           // 是否正在夜景处理中
+    val nightProcessingProgress: Float = 0f,                          // 夜景处理进度（0.0~1.0）
+    val isTimelapseRecording: Boolean = false,                        // 是否正在延时摄影录制
+    val timelapseFramesCaptured: Int = 0,                             // 延时摄影已捕获帧数
+    val timelapseElapsedMs: Long = 0L,                                // 延时摄影已用时间（毫秒）
+    val isTimelapseEncoding: Boolean = false,                         // 是否正在延时摄影编码中
+    val timelapseEncodingProgress: Float = 0f,                        // 延时摄影编码进度（0.0~1.0）
+    val portraitBlurLevel: PortraitBlurLevel = PortraitBlurLevel.MEDIUM, // 人像虚化等级
+    val isPortraitOverlayVisible: Boolean = true,                        // 人像模式覆盖层是否可见
+    val isPortraitBlurProcessing: Boolean = false,                    // 是否正在人像虚化处理中
+    val portraitBlurProgress: Float = 0f,                             // 人像虚化处理进度（0.0~1.0）
     val proSettings: ProModeSettings = ProModeSettings(),             // 专业模式参数
     val advancedSettings: CameraAdvancedSettings = CameraAdvancedSettings(), // 高级设置
     val zoomRange: ZoomRange = ZoomRange(),                           // 设备变焦范围
     val detectedFaces: List<FaceInfo> = emptyList(),                  // 人像模式人脸检测
+    val faceTrackingState: FaceTrackingState = FaceTrackingState.IDLE, // 人脸追踪状态
     val documentBounds: DocumentBounds? = null,                       // 文档模式边界检测
+    val documentScanMode: DocumentScanMode = DocumentScanMode.AUTO_ENHANCE, // 文档扫描模式
+    val isDocumentAutoCapture: Boolean = false,                       // 是否启用文档自动捕获
+    val isDocumentScanModeSelectorVisible: Boolean = false,           // 文档扫描模式选择器可见性
     val isHistogramVisible: Boolean = false,                          // 直方图是否可见（专业模式）
+    val focusPoint: Offset? = null,                                   // 触摸对焦点位置（归一化坐标）
+    val isFocusing: Boolean = false,                                  // 是否正在对焦中
+    val focusExposureCompensation: Float = 0f,                        // 触摸对焦曝光补偿（-1.0到1.0）
     val errorMessage: String? = null
 )
 

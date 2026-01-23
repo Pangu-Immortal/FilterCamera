@@ -1,122 +1,232 @@
 /**
- * Color.kt - 应用颜色定义
+ * Color.kt - 相机应用统一颜色与主题系统
  *
- * 定义Material 3主题颜色
- * 包含亮色和暗色主题
+ * 整合所有UI颜色定义为统一的CameraTheme对象
+ * 提供：
+ * - 主色调系统
+ * - 功能色系统
+ * - 控件色系统
+ * - 兼容旧版颜色定义
  *
  * @author qihao
- * @since 2.0.0
+ * @since 3.0.0
  */
 package com.qihao.filtercamera.presentation.common.theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// 主色调 - 深蓝色系
-val Primary = Color(0xFF1976D2)              // 主色
-val PrimaryVariant = Color(0xFF1565C0)       // 主色变体
-val PrimaryDark = Color(0xFF0D47A1)          // 深色主色
+// ==================== CameraTheme 统一主题系统 ====================
 
-// 次要色 - 青色系
-val Secondary = Color(0xFF00BCD4)            // 次要色
-val SecondaryVariant = Color(0xFF00ACC1)     // 次要色变体
+/**
+ * CameraTheme - 相机应用统一主题
+ *
+ * 集中管理所有颜色定义，确保视觉一致性
+ * 使用时通过 CameraTheme.Colors.xxx 访问
+ */
+object CameraTheme {
 
-// 背景色
-val BackgroundLight = Color(0xFFFAFAFA)      // 亮色背景
-val BackgroundDark = Color(0xFF121212)       // 暗色背景
-val SurfaceLight = Color(0xFFFFFFFF)         // 亮色表面
-val SurfaceDark = Color(0xFF1E1E1E)          // 暗色表面
+    // ==================== 颜色系统 ====================
 
-// 文字色
-val OnPrimaryLight = Color(0xFFFFFFFF)       // 主色上的文字（亮）
-val OnPrimaryDark = Color(0xFFFFFFFF)        // 主色上的文字（暗）
-val OnBackgroundLight = Color(0xFF212121)    // 背景上的文字（亮）
-val OnBackgroundDark = Color(0xFFE0E0E0)     // 背景上的文字（暗）
-val OnSurfaceLight = Color(0xFF212121)       // 表面上的文字（亮）
-val OnSurfaceDark = Color(0xFFE0E0E0)        // 表面上的文字（暗）
+    /**
+     * 统一颜色定义
+     */
+    object Colors {
+        // ---------- 主色调 ----------
+        val primary = Color(0xFFFFD700)                     // 金色主色（品牌色）
+        val primaryVariant = Color(0xFFD8AE31)              // 深金色变体
+        val onPrimary = Color.Black                          // 主色上的文字
 
-// 功能色
-val Error = Color(0xFFD32F2F)                // 错误色
-val Success = Color(0xFF388E3C)              // 成功色
-val Warning = Color(0xFFF57C00)              // 警告色
-val Info = Color(0xFF1976D2)                 // 信息色
+        // ---------- 背景色 ----------
+        val background = Color(0xFF000000)                   // 纯黑背景（相机标准）
+        val backgroundDark = Color(0xFF121212)              // 深色背景（设置页面）
+        val surface = Color(0xFF1E1E1E)                     // 卡片表面
+        val surfaceVariant = Color(0x4D000000)              // 半透明表面（30%黑）
+        val surfaceElevated = Color(0xFF2C2C2C)             // 提升表面
 
-// 相机控制颜色
-val CameraControlBackground = Color(0x80000000)  // 相机控制区背景（半透明黑）
-val CaptureButtonColor = Color(0xFFFFFFFF)       // 拍照按钮颜色
-val RecordingColor = Color(0xFFFF4444)           // 录像状态颜色
+        // ---------- 控件背景色 ----------
+        val controlBackground = Color(0x66000000)           // 控件半透明背景（40%黑）
+        val controlBackgroundDark = Color(0xCC000000)       // 深色控件背景（80%黑）
+        val controlBackgroundLight = Color(0x33FFFFFF)      // 浅色控件背景（20%白）
 
-// 滤镜选择器颜色
-val FilterSelectorBackground = Color(0xE6000000) // 滤镜选择器背景
-val FilterItemSelected = Color(0xFF1976D2)       // 选中的滤镜边框
-val FilterItemUnselected = Color(0x33FFFFFF)     // 未选中的滤镜边框
+        // ---------- 文字色 ----------
+        val textPrimary = Color(0xFFFFFFFF)                 // 主要文字（白色）
+        val textSecondary = Color(0xB3FFFFFF)               // 次要文字（70%白）
+        val textTertiary = Color(0x80FFFFFF)                // 三级文字（50%白）
+        val textDisabled = Color(0x4DFFFFFF)                // 禁用文字（30%白）
 
-// ==================== iOS风格颜色 ====================
+        // ---------- 图标色 ----------
+        val iconActive = Color(0xFFFFFFFF)                  // 激活图标（白色）
+        val iconInactive = Color(0x99FFFFFF)                // 非激活图标（60%白）
+        val iconAccent = Color(0xFFFFD700)                  // 强调图标（金色）
 
-// iOS系统色
-val iOSBlue = Color(0xFF007AFF)                  // iOS标准蓝色
-val iOSGray = Color(0xFF8E8E93)                  // iOS灰色
-val iOSGray2 = Color(0xFFAEAEB2)                 // iOS浅灰色
-val iOSGray3 = Color(0xFFC7C7CC)                 // iOS更浅灰色
-val iOSGray4 = Color(0xFFD1D1D6)                 // iOS极浅灰色
-val iOSGray5 = Color(0xFFE5E5EA)                 // iOS背景灰
-val iOSGray6 = Color(0xFFF2F2F7)                 // iOS最浅灰(背景)
-val iOSYellow = Color(0xFFFFCC00)                // iOS黄色（快门按钮）
-val iOSRed = Color(0xFFFF3B30)                   // iOS红色（录制）
-val iOSGreen = Color(0xFF34C759)                 // iOS绿色
-val iOSOrange = Color(0xFFFF9500)                // iOS橙色
+        // ---------- 状态色 ----------
+        val recording = Color(0xFFFF4444)                   // 录制红
+        val success = Color(0xFF4CAF50)                     // 成功绿
+        val warning = Color(0xFFFF9800)                     // 警告橙
+        val error = Color(0xFFFF3B30)                       // 错误红
+        val info = Color(0xFF2196F3)                        // 信息蓝
 
-// iOS毛玻璃背景
-val BlurBackgroundDark = Color(0xCC1C1C1E)       // 深色毛玻璃背景(80%透明)
-val BlurBackgroundLight = Color(0xCCF2F2F7)      // 浅色毛玻璃背景(80%透明)
-val BlurBackgroundUltraDark = Color(0xE61C1C1E)  // 超深色毛玻璃(90%透明)
+        // ---------- 分割线 ----------
+        val divider = Color(0x33FFFFFF)                     // 分割线（20%白）
+        val dividerLight = Color(0x1AFFFFFF)                // 浅分割线（10%白）
 
-// iOS底部控制栏
-val BottomBarBackground = Color(0xE6000000)      // 底部栏背景(90%黑)
-val BottomBarDivider = Color(0x33FFFFFF)         // 底部栏分割线(20%白)
+        // ---------- 阴影 ----------
+        val shadow = Color(0x40000000)                      // 阴影色（25%黑）
+        val shadowDark = Color(0x80000000)                  // 深阴影（50%黑）
+    }
 
-// iOS模式切换标签
-val ModeTabActive = Color(0xFFFFCC00)            // 激活模式标签(黄色)
-val ModeTabInactive = Color(0x99FFFFFF)          // 未激活模式标签(60%白)
+    // ==================== 控件专用颜色 ====================
 
-// iOS快门按钮
-val ShutterButtonOuter = Color(0xFFFFFFFF)       // 快门外圈(白色)
-val ShutterButtonInner = Color(0xFFFFFFFF)       // 快门内圈(白色)
-val ShutterButtonRecording = Color(0xFFFF3B30)   // 录制中内圈(红色)
+    /**
+     * 快门按钮颜色
+     */
+    object Shutter {
+        val outer = Color(0xFFFFFFFF)                       // 快门外圈（白色）
+        val inner = Color(0xFFFFFFFF)                       // 快门内圈（白色）
+        val recording = Color(0xFFFF4444)                   // 录制状态（红色）
+        val border = Color(0x40FFFFFF)                      // 快门边框（25%白）
+    }
 
-// iOS滤镜选择器
-val FilterSelectorBarBg = Color(0xE61C1C1E)      // 滤镜栏背景
-val FilterGroupActive = Color(0xFFFFCC00)        // 激活分组(黄色)
-val FilterGroupInactive = Color(0x99FFFFFF)      // 未激活分组(60%白)
-val FilterThumbnailBorder = Color(0xFFFFCC00)    // 选中滤镜边框(黄色)
-val FilterThumbnailText = Color(0xFFFFFFFF)      // 滤镜名称(白色)
+    /**
+     * 模式选择器颜色
+     */
+    object ModeSelector {
+        val active = Color(0xFFFFD700)                      // 激活模式（金色）
+        val inactive = Color(0x99FFFFFF)                    // 未激活模式（60%白）
+        val indicator = Color(0xFFFFD700)                   // 指示器（金色）
+        val background = Color(0x00000000)                  // 背景（透明）
+    }
 
-// ==================== 小米相机风格颜色 ====================
+    /**
+     * 滤镜选择器颜色
+     */
+    object FilterSelector {
+        val background = Color(0xE6000000)                  // 滤镜栏背景（90%黑）
+        val itemSelected = Color(0xFFFFD700)                // 选中边框（金色）
+        val itemUnselected = Color(0x33FFFFFF)              // 未选中边框（20%白）
+        val groupActive = Color(0xFFFFD700)                 // 激活分组（金色）
+        val groupInactive = Color(0x99FFFFFF)               // 未激活分组（60%白）
+        val labelText = Color(0xFFFFFFFF)                   // 标签文字（白色）
+    }
 
-// 小米底部控制栏
-val XiaomiBottomBarBg = Color(0xFF000000)        // 小米底部栏纯黑背景
-val XiaomiBottomBarGradient = Color(0x99000000)  // 小米底部栏渐变黑色
+    /**
+     * 对焦指示器颜色
+     */
+    object FocusIndicator {
+        val border = Color(0xFFFFD700)                      // 对焦框边框（金色）
+        val corner = Color(0xFFFFD700)                      // 对焦角标（金色）
+        val tracking = Color(0xFF4CAF50)                    // 追踪状态（绿色）
+        val failed = Color(0xFFFF4444)                      // 失败状态（红色）
+    }
 
-// 小米模式TAB
-val XiaomiModeActive = Color(0xFFFFFFFF)         // 小米激活模式(纯白)
-val XiaomiModeInactive = Color(0x80FFFFFF)       // 小米未激活模式(50%白)
-val XiaomiModeIndicator = Color(0xFFFFCC00)      // 小米模式下划线指示器(黄色)
+    /**
+     * 变焦控制颜色
+     */
+    object ZoomControl {
+        val buttonActive = Color(0xFFFFD700)                // 按钮激活（金色）
+        val buttonInactive = Color(0xFFFFFFFF)              // 按钮未激活（白色）
+        val indicator = Color(0xFFFFD700)                   // 指示器（金色）
+        val tickMajor = Color(0xFFFFFFFF)                   // 主刻度（白色）
+        val tickMinor = Color(0x80FFFFFF)                   // 次刻度（50%白）
+        val pillBackground = Color(0xCC000000)              // 胶囊背景（80%黑）
+        val pillBorder = Color(0x40FFFFFF)                  // 胶囊边框（25%白）
+    }
 
-// 小米快门按钮
-val XiaomiShutterOuter = Color(0xFFFFFFFF)       // 小米快门外圈(白色)
-val XiaomiShutterInner = Color(0xFFFFFFFF)       // 小米快门内圈(白色)
-val XiaomiShutterRecording = Color(0xFFFF4444)   // 小米录制状态(红色)
+    /**
+     * 顶部栏颜色
+     */
+    object TopBar {
+        val background = Color(0x00000000)                  // 背景（透明）
+        val backgroundGradient = Color(0x80000000)          // 渐变背景（50%黑）
+        val iconDefault = Color(0xFFFFFFFF)                 // 默认图标（白色）
+        val iconActive = Color(0xFFFFD700)                  // 激活图标（金色）
+    }
 
-// 小米控制按钮
-val XiaomiControlBg = Color(0x33FFFFFF)          // 小米控制按钮背景(20%白)
-val XiaomiControlIcon = Color(0xFFFFFFFF)        // 小米控制按钮图标(白色)
+    /**
+     * 底部栏颜色
+     */
+    object BottomBar {
+        val background = Color(0xE6000000)                  // 背景（90%黑）
+        val backgroundGradient = Color(0x99000000)          // 渐变背景（60%黑）
+        val divider = Color(0x33FFFFFF)                     // 分割线（20%白）
+    }
 
-// 小米相册缩略图
-val XiaomiGalleryBorder = Color(0x66FFFFFF)      // 小米相册边框(40%白)
-val XiaomiGalleryBorderActive = Color(0xFFFFFFFF) // 小米相册激活边框(白色)
+    /**
+     * 设置面板颜色
+     */
+    object SettingsPanel {
+        val background = Color(0xF2000000)                  // 面板背景（95%黑）
+        val itemBackground = Color(0x1AFFFFFF)              // 项目背景（10%白）
+        val itemBackgroundPressed = Color(0x33FFFFFF)       // 按下背景（20%白）
+        val header = Color(0xFFFFFFFF)                      // 标题文字（白色）
+        val subtitle = Color(0x99FFFFFF)                    // 副标题（60%白）
+        val toggle = Color(0xFFFFD700)                      // 开关激活色（金色）
+    }
 
-// 小米滤镜按钮
-val XiaomiFilterActive = Color(0xFFFFCC00)       // 小米滤镜激活(黄色)
-val XiaomiFilterInactive = Color(0xFFFFFFFF)     // 小米滤镜未激活(白色)
+    /**
+     * 直方图颜色
+     */
+    object Histogram {
+        val background = Color(0x80000000)                  // 背景（50%黑）
+        val red = Color(0xFFFF6B6B)                         // 红色通道
+        val green = Color(0xFF69DB7C)                       // 绿色通道
+        val blue = Color(0xFF74C0FC)                        // 蓝色通道
+        val luminance = Color(0xFFFFFFFF)                   // 亮度通道
+    }
 
-// 小米闪屏动画
-val XiaomiFlashOverlay = Color(0xFF000000)       // 小米拍照闪屏(纯黑)
+    /**
+     * 覆盖层颜色
+     */
+    object Overlay {
+        val background = Color(0xCC000000)                  // 覆盖层背景（80%黑）
+        val backgroundLight = Color(0x66000000)             // 浅覆盖层（40%黑）
+        val button = Color(0x66000000)                      // 按钮背景（40%黑）
+        val buttonPressed = Color(0x99000000)               // 按钮按下（60%黑）
+        val badge = Color(0xFFFFD700)                       // 徽章背景（金色）
+        val badgeText = Color.Black                         // 徽章文字（黑色）
+    }
+
+    /**
+     * 文档扫描颜色
+     */
+    object DocumentScan {
+        val frameBorder = Color(0xFF4CAF50)                 // 检测框边框（绿色）
+        val frameCorner = Color(0xFFFFD700)                 // 检测框角标（金色）
+        val gridLine = Color(0x40FFFFFF)                    // 网格线（25%白）
+        val scanLine = Color(0xFFFFD700)                    // 扫描线（金色）
+    }
+
+    /**
+     * 人脸检测颜色
+     */
+    object FaceDetection {
+        val frameBorder = Color(0xFF4CAF50)                 // 人脸框边框（绿色）
+        val frameCornerTracking = Color(0xFFFFD700)         // 追踪状态角标（金色）
+        val eyeIndicator = Color(0xFF2196F3)                // 眼睛指示器（蓝色）
+    }
+
+    /**
+     * 夜景模式颜色
+     */
+    object NightMode {
+        val progressBackground = Color(0x99000000)          // 进度背景（60%黑）
+        val progressForeground = Color(0xFFFFD700)          // 进度前景（金色）
+        val hint = Color(0xFFFFFFFF)                        // 提示文字（白色）
+    }
+
+    /**
+     * 延时摄影颜色
+     */
+    object Timelapse {
+        val indicator = Color(0xFFFF4444)                   // 录制指示器（红色）
+        val counter = Color(0xFFFFFFFF)                     // 计数器（白色）
+        val progressTrack = Color(0x40FFFFFF)               // 进度轨道（25%白）
+        val progressFill = Color(0xFFFFD700)                // 进度填充（金色）
+    }
+}
+
+// ==================== 使用说明 ====================
+// 所有颜色访问通过 CameraTheme 统一入口
+// 示例: CameraTheme.Colors.primary, CameraTheme.Shutter.outer
+// 旧版兼容变量已移除（2026-01-20清理）

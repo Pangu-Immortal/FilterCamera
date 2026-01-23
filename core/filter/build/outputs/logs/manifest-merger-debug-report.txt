@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml:2:13-83
-INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml:2:13-83
+ADDED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml:2:13-83
+INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml:2:13-83
 	package
-		INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml
+		INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml
 	xmlns:android
-		ADDED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml:2:23-81
+		ADDED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml:2:23-81
 uses-sdk
-INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml reason: use-sdk injection requested
-INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml
-INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml
+INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml reason: use-sdk injection requested
+INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml
+INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml
 	android:targetSdkVersion
-		INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml
+		INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml
 	android:minSdkVersion
-		INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17909635062475591579.xml
+		INJECTED from /Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest14209226617346842145.xml

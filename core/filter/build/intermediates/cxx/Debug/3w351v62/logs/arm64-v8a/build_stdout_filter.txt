@@ -1,2 +1,0 @@
-ninja: Entering directory `/Users/qihao/AndroidStudioProjects/FilterCamera/core/filter/.cxx/Debug/3w351v62/arm64-v8a'
-ninja: no work to do.

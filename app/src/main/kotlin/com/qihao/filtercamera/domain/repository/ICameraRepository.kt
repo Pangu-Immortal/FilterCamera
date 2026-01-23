@@ -19,6 +19,9 @@ import com.qihao.filtercamera.domain.model.FlashMode
 import com.qihao.filtercamera.domain.model.FocusMode
 import com.qihao.filtercamera.domain.model.HdrMode
 import com.qihao.filtercamera.domain.model.MacroMode
+import com.qihao.filtercamera.domain.model.NightMode
+import com.qihao.filtercamera.domain.model.PortraitBlurLevel
+import com.qihao.filtercamera.domain.model.TimelapseSettings
 import com.qihao.filtercamera.domain.model.WhiteBalanceMode
 import kotlinx.coroutines.flow.Flow
 
@@ -100,11 +103,46 @@ interface ICameraRepository {
     suspend fun autoFocus(): Result<Unit>
 
     /**
+     * 触摸对焦 - 在指定坐标点进行对焦和测光
+     *
+     * 使用CameraX的FocusMeteringAction在指定位置触发对焦
+     * 坐标为归一化值，相对于预览区域
+     *
+     * @param x 归一化X坐标 (0.0~1.0，0为左边缘，1为右边缘)
+     * @param y 归一化Y坐标 (0.0~1.0，0为上边缘，1为下边缘)
+     * @return 操作结果，包含对焦是否成功
+     */
+    suspend fun focusAtPoint(x: Float, y: Float): Result<Unit>
+
+    /**
      * 设置HDR模式
      * @param mode HDR模式
      * @return 操作结果
      */
     suspend fun setHdrMode(mode: HdrMode): Result<Unit>
+
+    /**
+     * 设置夜景模式
+     *
+     * 夜景模式启用后：
+     * - 硬件支持时使用CameraX Night扩展（设备原生夜景）
+     * - 硬件不支持时使用软件多帧合成算法
+     * - AUTO模式下自动检测低光环境启用
+     *
+     * @param mode 夜景模式
+     * @return 操作结果
+     */
+    suspend fun setNightMode(mode: NightMode): Result<Unit>
+
+    /**
+     * 获取夜景处理进度流
+     *
+     * 当夜景模式处理图像时，返回当前处理阶段和进度
+     * 用于UI显示处理进度
+     *
+     * @return Pair<处理阶段名称, 进度(0.0~1.0)>，null表示未在处理中
+     */
+    fun getNightProcessingProgress(): Flow<Pair<String, Float>?>
 
     /**
      * 设置微距模式
@@ -201,6 +239,30 @@ interface ICameraRepository {
     suspend fun setFocusDistance(distance: Float): Result<Unit>
 
     /**
+     * 设置快门速度（曝光时间）
+     *
+     * 使用Camera2 SENSOR_EXPOSURE_TIME实现真实快门速度控制
+     * 快门速度单位为秒，内部转换为纳秒传递给Camera2
+     *
+     * 注意：
+     * - 设置手动快门速度需要禁用自动曝光（AE_MODE_OFF）
+     * - 快门速度与ISO联动，需要配合调整防止过曝/欠曝
+     * - 设备有最小/最大曝光时间限制
+     *
+     * @param speed 快门速度（秒），null表示恢复自动曝光
+     *              例如：1/4000s = 0.00025f, 1s = 1.0f
+     * @return 操作结果
+     */
+    suspend fun setShutterSpeed(speed: Float?): Result<Unit>
+
+    /**
+     * 获取设备支持的快门速度范围
+     *
+     * @return Pair(最小曝光时间纳秒, 最大曝光时间纳秒)，设备不支持时返回null
+     */
+    fun getExposureTimeRange(): Pair<Long, Long>?
+
+    /**
      * 获取曝光补偿范围
      * @return 曝光补偿范围（minIndex, maxIndex, step）
      */
@@ -233,4 +295,79 @@ interface ICameraRepository {
      * @return true表示支持闪光灯
      */
     fun hasFlashUnit(): Boolean
+
+    // ==================== 延时摄影控制 ====================
+
+    /**
+     * 开始延时摄影录制
+     *
+     * 初始化延时摄影引擎，准备开始捕获帧
+     *
+     * @param settings 延时摄影配置
+     * @return 操作结果
+     */
+    suspend fun startTimelapse(settings: TimelapseSettings): Result<Unit>
+
+    /**
+     * 停止延时摄影并编码输出视频
+     *
+     * 停止帧捕获，将帧序列编码为MP4视频
+     *
+     * @return 输出视频文件路径
+     */
+    suspend fun stopTimelapse(): Result<String>
+
+    /**
+     * 取消延时摄影（不生成视频）
+     *
+     * @return 操作结果
+     */
+    suspend fun cancelTimelapse(): Result<Unit>
+
+    /**
+     * 暂停延时摄影
+     *
+     * @return 操作结果
+     */
+    suspend fun pauseTimelapse(): Result<Unit>
+
+    /**
+     * 恢复延时摄影
+     *
+     * @return 操作结果
+     */
+    suspend fun resumeTimelapse(): Result<Unit>
+
+    /**
+     * 获取延时摄影进度流
+     *
+     * @return Triple(已捕获帧数, 已用时间毫秒, 编码进度0.0~1.0)
+     */
+    fun getTimelapseProgress(): Flow<Triple<Int, Long, Float>>
+
+    /**
+     * 检查是否处于延时摄影录制状态
+     *
+     * @return true表示正在录制
+     */
+    fun isTimelapseRecording(): Boolean
+
+    // ==================== 人像虚化控制 ====================
+
+    /**
+     * 设置人像虚化等级
+     *
+     * 应用于PORTRAIT模式的拍照
+     *
+     * @param level 虚化等级
+     * @return 操作结果
+     */
+    suspend fun setPortraitBlurLevel(level: PortraitBlurLevel): Result<Unit>
+
+    /**
+     * 获取当前人像虚化等级
+     *
+     * @return 当前虚化等级
+     */
+    fun getPortraitBlurLevel(): PortraitBlurLevel
 }
