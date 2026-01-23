@@ -217,6 +217,19 @@ class CameraUseCase @Inject constructor(
         camera.autoFocus()
 
     /**
+     * 触摸对焦 - 在指定坐标点进行对焦和测光
+     *
+     * 用户点击预览区域时调用此方法，实现点触对焦功能
+     * 同时在该点进行测光，优化曝光效果
+     *
+     * @param x 归一化X坐标 (0.0~1.0，0为左边缘，1为右边缘)
+     * @param y 归一化Y坐标 (0.0~1.0，0为上边缘，1为下边缘)
+     * @return 操作结果
+     */
+    suspend fun focusAtPoint(x: Float, y: Float): Result<Unit> =
+        camera.focusAtPoint(x, y)
+
+    /**
      * 获取变焦范围
      * @return 设备支持的变焦范围Flow
      */
@@ -230,6 +243,31 @@ class CameraUseCase @Inject constructor(
      */
     suspend fun setHdrMode(mode: com.qihao.filtercamera.domain.model.HdrMode): Result<Unit> =
         camera.setHdrMode(mode)
+
+    /**
+     * 设置夜景模式
+     *
+     * 控制夜景拍摄功能：
+     * - ON: 强制开启夜景模式
+     * - OFF: 关闭夜景模式
+     * - AUTO: 根据环境光自动判断是否启用
+     *
+     * @param mode 夜景模式
+     * @return 操作结果
+     */
+    suspend fun setNightMode(mode: com.qihao.filtercamera.domain.model.NightMode): Result<Unit> =
+        camera.setNightMode(mode)
+
+    /**
+     * 获取夜景处理进度流
+     *
+     * 返回当前夜景处理的阶段名称和进度（0.0~1.0）
+     * null表示当前没有正在进行的夜景处理
+     *
+     * @return Pair<处理阶段名称, 进度>
+     */
+    fun getNightProcessingProgress(): Flow<Pair<String, Float>?> =
+        camera.getNightProcessingProgress()
 
     /**
      * 设置微距模式
@@ -292,6 +330,27 @@ class CameraUseCase @Inject constructor(
     fun getExposureCompensationRange(): Triple<Int, Int, Float> =
         camera.getExposureCompensationRange()
 
+    /**
+     * 设置快门速度（曝光时间）
+     *
+     * 使用Camera2 SENSOR_EXPOSURE_TIME实现真实快门速度控制
+     * 设置手动快门需要禁用自动曝光，建议配合ISO调整以获得正确曝光
+     *
+     * @param speed 快门速度（秒），null表示恢复自动曝光
+     *              例如：1/4000s = 0.00025f, 1/30s = 0.0333f, 1s = 1.0f
+     * @return 操作结果
+     */
+    suspend fun setShutterSpeed(speed: Float?): Result<Unit> =
+        camera.setShutterSpeed(speed)
+
+    /**
+     * 获取设备支持的快门速度范围
+     *
+     * @return Pair(最小曝光时间纳秒, 最大曝光时间纳秒)，设备不支持时返回null
+     */
+    fun getExposureTimeRange(): Pair<Long, Long>? =
+        camera.getExposureTimeRange()
+
     // ==================== 闪光灯控制 ====================
 
     /**
@@ -341,5 +400,102 @@ class CameraUseCase @Inject constructor(
     suspend fun release() {
         camera.release()                                              // 释放CameraX资源
         filter.releaseFilterEngine()                                  // 释放滤镜引擎
+    }
+
+    // ==================== 延时摄影控制 ====================
+
+    /**
+     * 开始延时摄影录制
+     *
+     * @param settings 延时摄影配置
+     * @return 操作结果
+     */
+    suspend fun startTimelapse(settings: com.qihao.filtercamera.domain.model.TimelapseSettings): Result<Unit> =
+        camera.startTimelapse(settings)
+
+    /**
+     * 停止延时摄影并编码输出视频
+     *
+     * @return 输出视频文件路径Result
+     */
+    suspend fun stopTimelapse(): Result<String> =
+        camera.stopTimelapse()
+
+    /**
+     * 取消延时摄影（不生成视频）
+     *
+     * @return 操作结果
+     */
+    suspend fun cancelTimelapse(): Result<Unit> =
+        camera.cancelTimelapse()
+
+    /**
+     * 暂停延时摄影
+     *
+     * @return 操作结果
+     */
+    suspend fun pauseTimelapse(): Result<Unit> =
+        camera.pauseTimelapse()
+
+    /**
+     * 恢复延时摄影
+     *
+     * @return 操作结果
+     */
+    suspend fun resumeTimelapse(): Result<Unit> =
+        camera.resumeTimelapse()
+
+    /**
+     * 获取延时摄影进度流
+     *
+     * @return Triple(已捕获帧数, 已用时间毫秒, 编码进度0.0~1.0)
+     */
+    fun getTimelapseProgress(): Flow<Triple<Int, Long, Float>> =
+        camera.getTimelapseProgress()
+
+    /**
+     * 检查是否处于延时摄影录制状态
+     *
+     * @return true表示正在录制
+     */
+    fun isTimelapseRecording(): Boolean =
+        camera.isTimelapseRecording()
+
+    // ==================== 人像虚化控制 ====================
+
+    /**
+     * 设置人像虚化等级
+     *
+     * @param level 虚化等级
+     * @return 操作结果
+     */
+    suspend fun setPortraitBlurLevel(level: com.qihao.filtercamera.domain.model.PortraitBlurLevel): Result<Unit> =
+        camera.setPortraitBlurLevel(level)
+
+    /**
+     * 获取当前人像虚化等级
+     *
+     * @return 当前虚化等级
+     */
+    fun getPortraitBlurLevel(): com.qihao.filtercamera.domain.model.PortraitBlurLevel =
+        camera.getPortraitBlurLevel()
+
+    // ==================== 相册操作 ====================
+
+    /**
+     * 获取最新的相册缩略图
+     *
+     * 从MediaStore查询最近的照片，生成缩略图供左下角预览显示
+     * 如果相册为空则返回null
+     *
+     * @param width 缩略图宽度（默认100px）
+     * @param height 缩略图高度（默认100px）
+     * @return 缩略图Bitmap，相册为空时返回null
+     */
+    suspend fun getLatestGalleryThumbnail(width: Int = 100, height: Int = 100): Bitmap? {
+        val recentMedia = media.getRecentMedia(limit = 1)       // 只查询最近1张照片
+        if (recentMedia.isEmpty()) return null                   // 相册为空
+        val latestUri = recentMedia.first().uri                  // 获取最新照片Uri
+        return media.loadThumbnail(latestUri, width, height)     // 加载缩略图
     }
 }

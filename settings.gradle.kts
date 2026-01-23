@@ -22,6 +22,8 @@ dependencyResolutionManagement {
         maven { url = uri("https://maven.aliyun.com/repository/central") }
         google()
         mavenCentral()
+        // JitPack（用于 RenderScript Toolkit 等 GitHub 项目）
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

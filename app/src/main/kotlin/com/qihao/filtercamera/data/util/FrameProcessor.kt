@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -261,9 +262,9 @@ class FrameProcessor(
                 val avgProcessingTime = totalProcessingTimeMs.get().toDouble() / count
                 val bufferStats = frameBuffer.getStatistics()
 
-                Log.d(TAG, "【帧处理统计】FPS=${String.format("%.1f", fps)}, " +
-                        "平均耗时=${String.format("%.1f", avgProcessingTime)}ms, " +
-                        "丢帧率=${String.format("%.1f", bufferStats.dropRate)}%")
+                Log.d(TAG, "【帧处理统计】FPS=${String.format(Locale.US, "%.1f", fps)}, " +
+                        "平均耗时=${String.format(Locale.US, "%.1f", avgProcessingTime)}ms, " +
+                        "丢帧率=${String.format(Locale.US, "%.1f", bufferStats.dropRate)}%")
             }
 
             lastStatsTime = currentTime
@@ -282,7 +283,7 @@ class FrameProcessor(
 
             Log.i(TAG, "【帧处理最终统计】" +
                     "总处理帧数=$count, " +
-                    "平均耗时=${String.format("%.1f", avgProcessingTime)}ms, " +
+                    "平均耗时=${String.format(Locale.US, "%.1f", avgProcessingTime)}ms, " +
                     "缓冲区统计=$bufferStats")
         }
     }
@@ -323,7 +324,7 @@ data class FrameProcessorStatistics(
     override fun toString(): String {
         return "FrameProcessorStatistics(" +
                 "已处理=$processedCount, " +
-                "平均耗时=${String.format("%.1f", averageProcessingTimeMs)}ms, " +
+                "平均耗时=${String.format(Locale.US, "%.1f", averageProcessingTimeMs)}ms, " +
                 "运行=$isRunning, 暂停=$isPaused, " +
                 "缓冲区=$bufferStatistics)"
     }

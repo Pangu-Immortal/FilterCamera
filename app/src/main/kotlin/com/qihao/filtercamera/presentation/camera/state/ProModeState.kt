@@ -149,13 +149,33 @@ class ProModeStateHolder(
     // ==================== 快门控制 ====================
 
     /**
-     * 设置快门速度
-     * @param speed 快门速度，null表示自动
+     * 设置快门速度（真实Camera2控制）
+     *
+     * 使用Camera2 SENSOR_EXPOSURE_TIME实现真实快门速度控制
+     * 设置手动快门需要禁用自动曝光，与ISO联动保证正确曝光
+     *
+     * @param speed 快门速度（秒），null表示恢复自动曝光
+     *              例如：1/4000s = 0.00025f, 1/30s = 0.0333f, 1s = 1.0f
      */
     fun setShutterSpeed(speed: Float?) {
         Log.d(TAG, "setShutterSpeed: speed=$speed")
         _state.update { it.copy(settings = it.settings.copy(shutterSpeed = speed)) }
-        // 快门速度通过曝光补偿间接影响
+
+        // 调用真实的Camera2快门速度控制
+        scope.launch {
+            useCase.setShutterSpeed(speed).onFailure { error ->
+                Log.e(TAG, "setShutterSpeed: 设置失败", error)
+                onError("快门速度设置失败: ${error.message}")
+            }
+        }
+    }
+
+    /**
+     * 重置快门速度为自动
+     */
+    fun resetShutterSpeed() {
+        Log.d(TAG, "resetShutterSpeed: 重置为自动曝光")
+        setShutterSpeed(null)
     }
 
     // ==================== 曝光补偿控制 ====================
@@ -245,29 +265,54 @@ class ProModeStateHolder(
 
     /**
      * 重置所有专业模式参数
+     *
+     * 将所有专业模式参数恢复为默认值：
+     * - ISO: 自动
+     * - 快门速度: 自动曝光
+     * - 曝光补偿: 0
+     * - 白平衡: 自动
+     * - 对焦模式: 连续对焦
      */
     fun resetAll() {
         Log.d(TAG, "resetAll: 重置所有参数")
         _state.update { it.copy(settings = ProModeSettings()) }
         scope.launch {
-            // 批量重置
-            useCase.setIso(null)
-            useCase.setExposureCompensation(0)
-            useCase.setWhiteBalance(WhiteBalanceMode.AUTO)
-            useCase.setFocusMode(FocusMode.CONTINUOUS)
+            // 批量重置Camera参数
+            useCase.setIso(null)                                           // 重置ISO为自动
+            useCase.setShutterSpeed(null)                                  // 重置快门为自动曝光
+            useCase.setExposureCompensation(0)                             // 重置曝光补偿为0
+            useCase.setWhiteBalance(WhiteBalanceMode.AUTO)                 // 重置白平衡为自动
+            useCase.setFocusMode(FocusMode.CONTINUOUS)                     // 重置对焦为连续
         }
     }
 
     /**
-     * 获取当前设置的摘要（用于显示）
+     * 获取当前设置的摘要（用于显示/调试）
      */
     fun getSettingsSummary(): String {
         val s = _state.value.settings
         return buildString {
             append("ISO: ${s.iso ?: "自动"}")
+            append(" | SS: ${formatShutterSpeed(s.shutterSpeed)}")         // 快门速度
             append(" | EV: ${if (s.exposureCompensation >= 0) "+" else ""}${s.exposureCompensation}")
             append(" | WB: ${s.whiteBalance.displayName}")
             append(" | AF: ${s.focusMode.displayName}")
+        }
+    }
+
+    /**
+     * 格式化快门速度显示
+     *
+     * @param speed 快门速度（秒），null表示自动
+     * @return 格式化字符串，如"1/4000"或"自动"
+     */
+    private fun formatShutterSpeed(speed: Float?): String {
+        if (speed == null) return "自动"
+        return if (speed < 1.0f) {
+            val denominator = (1.0f / speed).toInt()
+            "1/$denominator"
+        } else {
+            "${speed.toInt()}s"
         }
     }
 }

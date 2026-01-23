@@ -16,6 +16,7 @@ package com.qihao.filtercamera.data.util
 
 import android.graphics.Bitmap
 import android.util.Log
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -229,6 +230,6 @@ data class FrameBufferStatistics(
     override fun toString(): String {
         return "FrameBufferStatistics(容量=$capacity, 当前=$currentSize, " +
                 "写入=$totalWriteCount, 丢弃=$totalDropCount, 读取=$totalReadCount, " +
-                "丢帧率=${String.format("%.2f", dropRate)}%)"
+                "丢帧率=${String.format(Locale.US, "%.2f", dropRate)}%)"
     }
 }

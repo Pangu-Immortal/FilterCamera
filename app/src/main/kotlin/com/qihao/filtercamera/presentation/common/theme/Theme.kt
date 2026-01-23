@@ -25,33 +25,46 @@ import androidx.core.view.WindowCompat
 
 /**
  * 暗色主题配色方案
+ * 使用 CameraTheme 统一颜色系统
  */
 private val DarkColorScheme = darkColorScheme(
-    primary = Primary,
-    secondary = Secondary,
-    background = BackgroundDark,
-    surface = SurfaceDark,
-    onPrimary = OnPrimaryDark,
-    onSecondary = OnPrimaryDark,
-    onBackground = OnBackgroundDark,
-    onSurface = OnSurfaceDark,
-    error = Error
+    primary = CameraTheme.Colors.primary,                    // 金色主色
+    secondary = CameraTheme.Colors.info,                     // 信息蓝作为次色
+    background = CameraTheme.Colors.backgroundDark,          // 深色背景
+    surface = CameraTheme.Colors.surface,                    // 卡片表面
+    onPrimary = CameraTheme.Colors.onPrimary,                // 主色上文字（黑色）
+    onSecondary = CameraTheme.Colors.textPrimary,            // 次色上文字（白色）
+    onBackground = CameraTheme.Colors.textSecondary,         // 背景上文字（70%白）
+    onSurface = CameraTheme.Colors.textSecondary,            // 表面上文字（70%白）
+    error = CameraTheme.Colors.error                         // 错误红
 )
 
 /**
  * 亮色主题配色方案
+ * 亮色模式专用颜色（相机应用主要使用暗色模式）
  */
 private val LightColorScheme = lightColorScheme(
-    primary = Primary,
-    secondary = Secondary,
-    background = BackgroundLight,
-    surface = SurfaceLight,
-    onPrimary = OnPrimaryLight,
-    onSecondary = OnPrimaryLight,
-    onBackground = OnBackgroundLight,
-    onSurface = OnSurfaceLight,
-    error = Error
+    primary = CameraTheme.Colors.primary,                    // 金色主色
+    secondary = CameraTheme.Colors.info,                     // 信息蓝作为次色
+    background = LightModeColors.background,                 // 亮色背景
+    surface = LightModeColors.surface,                       // 亮色表面
+    onPrimary = CameraTheme.Colors.onPrimary,                // 主色上文字（黑色）
+    onSecondary = LightModeColors.onSurface,                 // 次色上文字
+    onBackground = LightModeColors.onBackground,             // 背景上文字
+    onSurface = LightModeColors.onSurface,                   // 表面上文字
+    error = CameraTheme.Colors.error                         // 错误红
 )
+
+/**
+ * 亮色模式专用颜色
+ * 相机应用主要使用暗色模式，亮色模式仅用于设置等辅助页面
+ */
+private object LightModeColors {
+    val background = androidx.compose.ui.graphics.Color(0xFFFAFAFA)  // 浅灰背景
+    val surface = androidx.compose.ui.graphics.Color(0xFFFFFFFF)     // 纯白表面
+    val onBackground = androidx.compose.ui.graphics.Color(0xFF212121) // 深灰文字
+    val onSurface = androidx.compose.ui.graphics.Color(0xFF212121)    // 深灰文字
+}
 
 /**
  * FilterCamera应用主题

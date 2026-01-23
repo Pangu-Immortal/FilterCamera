@@ -22,6 +22,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
+import androidx.exifinterface.media.ExifInterface
 import com.qihao.filtercamera.domain.repository.IMediaRepository
 import com.qihao.filtercamera.domain.repository.MediaFile
 import com.qihao.filtercamera.domain.repository.MediaType
@@ -324,26 +325,21 @@ class MediaRepositoryImpl @Inject constructor(
     private fun handleOrientation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap {
         return try {
             val inputStream = context.contentResolver.openInputStream(uri) ?: return bitmap
-            val exif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                android.media.ExifInterface(inputStream)
-            } else {
-                inputStream.close()
-                return bitmap
-            }
+            val exif = ExifInterface(inputStream)                                     // 使用 androidx ExifInterface
             inputStream.close()
 
             val orientation = exif.getAttributeInt(
-                android.media.ExifInterface.TAG_ORIENTATION,
-                android.media.ExifInterface.ORIENTATION_NORMAL
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
             )
 
             val matrix = android.graphics.Matrix()
             when (orientation) {
-                android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-                android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-                android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-                android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
-                android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+                ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+                ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+                ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
                 else -> return bitmap
             }
 

@@ -21,6 +21,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -61,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,12 +78,14 @@ import com.qihao.filtercamera.domain.model.MacroMode
 import com.qihao.filtercamera.domain.model.TimerMode
 import com.qihao.filtercamera.domain.model.ZoomConfig
 import com.qihao.filtercamera.domain.repository.ZoomRange
+import com.qihao.filtercamera.presentation.common.theme.CameraTheme
+import com.qihao.filtercamera.presentation.common.theme.rememberResponsiveDimens
 
-// ==================== 颜色常量 ====================
+// ==================== 颜色常量（使用CameraTheme） ====================
 
-private val ActiveColor = Color(0xFFFF6B35)                               // 激活状态颜色（橙红色）
-private val InactiveColor = Color.White                                   // 未激活颜色
-private val PanelBackground = Color(0xCC1C1C1E)                          // 面板背景色（半透明深色）
+private val ActiveColor @Composable get() = CameraTheme.Colors.primary          // 激活状态颜色（金色）
+private val InactiveColor @Composable get() = CameraTheme.Colors.textPrimary    // 未激活颜色（白色）
+private val PanelBackground @Composable get() = CameraTheme.SettingsPanel.background  // 面板背景色
 
 // ==================== 顶部控制栏 ====================
 
@@ -89,6 +93,7 @@ private val PanelBackground = Color(0xCC1C1C1E)                          // 面�
  * 顶部控制栏
  *
  * 包含展开/收起箭头按钮
+ * 使用响应式尺寸系统
  *
  * @param isExpanded 是否展开设置面板
  * @param onToggle 切换展开状态回调
@@ -100,10 +105,12 @@ fun TopControlBar(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = dimens.spacing.lg, vertical = dimens.spacing.sm), // 响应式内边距
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -118,6 +125,8 @@ fun TopControlBar(
 /**
  * 展开/收起箭头按钮
  *
+ * 使用响应式尺寸系统
+ *
  * @param isExpanded 是否展开
  * @param onClick 点击回调
  * @param modifier 修饰符
@@ -128,23 +137,25 @@ fun ExpandArrowButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
+
     // 旋转动画：展开时向下，收起时向上
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
-        animationSpec = tween(300),
+        animationSpec = tween(dimens.animation.normal),                          // 响应式动画时长
         label = "arrowRotation"
     )
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0x33FFFFFF))
+            .clip(RoundedCornerShape(dimens.radius.medium))                      // 响应式圆角
+            .background(CameraTheme.Colors.controlBackgroundLight)               // 统一控件背景
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 28.dp, vertical = 6.dp),                       // 精致化：32/8→28/6
+            .padding(horizontal = dimens.spacing.xl, vertical = dimens.spacing.sm), // 响应式内边距
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -152,7 +163,7 @@ fun ExpandArrowButton(
             contentDescription = if (isExpanded) "收起设置" else "展开设置",
             tint = if (isExpanded) ActiveColor else InactiveColor,
             modifier = Modifier
-                .size(24.dp)                                                     // 精致化：28→24dp
+                .size(dimens.topBarIconSize)                                     // 响应式图标尺寸
                 .rotate(rotation)
         )
     }
@@ -164,6 +175,7 @@ fun ExpandArrowButton(
  * 设置面板
  *
  * 网格布局的设置选项：闪光灯、HDR、超级微距、画幅、光圈、定时拍照、设置
+ * 使用响应式尺寸系统
  *
  * @param isVisible 是否可见
  * @param settings 当前设置
@@ -191,16 +203,18 @@ fun SettingsPanel(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
+
     AnimatedVisibility(
         visible = isVisible,
         enter = expandVertically(
-            animationSpec = tween(300),
+            animationSpec = tween(dimens.animation.normal),
             expandFrom = Alignment.Top
-        ) + fadeIn(animationSpec = tween(200)),
+        ) + fadeIn(animationSpec = tween(dimens.animation.fast)),
         exit = shrinkVertically(
             animationSpec = tween(250),
             shrinkTowards = Alignment.Top
-        ) + fadeOut(animationSpec = tween(150)),
+        ) + fadeOut(animationSpec = tween(dimens.animation.fast)),
         modifier = modifier
     ) {
         Box(
@@ -208,9 +222,12 @@ fun SettingsPanel(
                 .fillMaxWidth()
                 .background(
                     color = PanelBackground,
-                    shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+                    shape = RoundedCornerShape(
+                        bottomStart = dimens.radius.medium,
+                        bottomEnd = dimens.radius.medium
+                    )
                 )
-                .padding(horizontal = 12.dp, vertical = 12.dp)
+                .padding(horizontal = dimens.spacing.md, vertical = dimens.spacing.md) // 响应式内边距
         ) {
             Column {
                 // 第一行：闪光灯、HDR、超级微距、画幅、光圈
@@ -313,7 +330,7 @@ fun SettingsPanel(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(dimens.spacing.lg))            // 响应式间距
 
                 // 第二行：定时拍照、设置
                 Row(
@@ -339,7 +356,7 @@ fun SettingsPanel(
                         }
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(dimens.spacing.sm))         // 响应式间距
 
                     // 设置
                     SettingsItem(
@@ -357,6 +374,8 @@ fun SettingsPanel(
 /**
  * 设置项
  *
+ * 使用响应式尺寸系统
+ *
  * @param icon 图标文字
  * @param label 标签
  * @param isActive 是否激活
@@ -373,30 +392,31 @@ private fun SettingsItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
     val textColor = if (isActive) ActiveColor else InactiveColor
 
     Column(
         modifier = modifier
-            .widthIn(min = 52.dp, max = 64.dp)                                   // 精致化：60-80→52-64dp
-            .clip(RoundedCornerShape(8.dp))
+            .widthIn(min = dimens.settingsItemHeight, max = dimens.settingsItemHeight + 12.dp) // 响应式宽度
+            .clip(RoundedCornerShape(dimens.radius.small))                       // 响应式圆角
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 6.dp, vertical = 6.dp),                        // 精致化：8→6dp
+            .padding(horizontal = dimens.spacing.sm, vertical = dimens.spacing.sm), // 响应式内边距
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 图标区域（固定高度）
         Box(
             modifier = Modifier
-                .size(28.dp),                                                    // 精致化：32→28dp
+                .size(dimens.settingsIconSize + 4.dp),                           // 响应式图标区域尺寸
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = icon,
                 color = textColor,
-                fontSize = 16.sp,                                                // 精致化：18→16sp
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1
             )
@@ -405,22 +425,22 @@ private fun SettingsItem(
                 Text(
                     text = subLabel,
                     color = textColor,
-                    fontSize = 7.sp,                                             // 精致化：8→7sp
+                    fontSize = 7.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(start = 14.dp)                                  // 精致化：16→14dp
+                        .padding(start = dimens.spacing.md)                      // 响应式偏移
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(3.dp))                                 // 精致化：4→3dp
+        Spacer(modifier = Modifier.height(dimens.spacing.xs))                    // 响应式间距
 
         // 标签（限制宽度，单行显示）
         Text(
             text = label,
             color = textColor,
-            fontSize = 9.sp,                                                     // 精致化：10→9sp
+            fontSize = 9.sp,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -430,6 +450,8 @@ private fun SettingsItem(
 
 /**
  * 设置项（使用Material图标）
+ *
+ * 使用响应式尺寸系统
  *
  * @param icon Material图标
  * @param label 标签
@@ -445,40 +467,41 @@ private fun SettingsIconItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
     val iconColor = if (isActive) ActiveColor else InactiveColor
 
     Column(
         modifier = modifier
-            .widthIn(min = 52.dp, max = 64.dp)                                   // 精致化：60-80→52-64dp
-            .clip(RoundedCornerShape(8.dp))
+            .widthIn(min = dimens.settingsItemHeight, max = dimens.settingsItemHeight + 12.dp) // 响应式宽度
+            .clip(RoundedCornerShape(dimens.radius.small))                       // 响应式圆角
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 6.dp, vertical = 6.dp),                        // 精致化：8→6dp
+            .padding(horizontal = dimens.spacing.sm, vertical = dimens.spacing.sm), // 响应式内边距
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 图标区域（固定高度）
         Box(
-            modifier = Modifier.size(28.dp),                                     // 精致化：32→28dp
+            modifier = Modifier.size(dimens.settingsIconSize + 4.dp),            // 响应式图标区域尺寸
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
                 tint = iconColor,
-                modifier = Modifier.size(20.dp)                                  // 精致化：24→20dp
+                modifier = Modifier.size(dimens.settingsIconSize - 4.dp)         // 响应式图标尺寸
             )
         }
 
-        Spacer(modifier = Modifier.height(3.dp))                                 // 精致化：4→3dp
+        Spacer(modifier = Modifier.height(dimens.spacing.xs))                    // 响应式间距
 
         // 标签（限制宽度，单行显示）
         Text(
             text = label,
             color = iconColor,
-            fontSize = 9.sp,                                                     // 精致化：10→9sp
+            fontSize = 9.sp,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -493,6 +516,7 @@ private fun SettingsIconItem(
  *
  * 显示当前变焦倍数，点击展开/收起完整变焦滑块
  * 精致小巧的胶囊设计
+ * 使用响应式尺寸系统
  *
  * @param currentZoom 当前变焦倍数
  * @param isExpanded 滑块是否展开
@@ -506,25 +530,26 @@ fun ZoomIndicator(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (isExpanded) ActiveColor else Color(0x66000000)
-    val textColor = if (isExpanded) Color.Black else Color.White
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
+    val backgroundColor = if (isExpanded) ActiveColor else CameraTheme.Colors.controlBackground
+    val textColor = if (isExpanded) CameraTheme.Colors.onPrimary else CameraTheme.Colors.textPrimary
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))                                  // 圆角胶囊
+            .clip(RoundedCornerShape(dimens.radius.medium))                      // 响应式圆角
             .background(backgroundColor)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 10.dp, vertical = 4.dp),                   // 精致内边距
+            .padding(horizontal = dimens.spacing.md, vertical = dimens.spacing.xs), // 响应式内边距
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = ZoomConfig.formatZoom(currentZoom),
             color = textColor,
-            fontSize = 11.sp,                                                 // 精致字号
+            fontSize = 11.sp,
             fontWeight = FontWeight.Medium
         )
     }
@@ -534,6 +559,7 @@ fun ZoomIndicator(
  * 变焦控制滑块
  *
  * 显示当前变焦倍数，支持滑动调节和快捷档位
+ * 使用响应式尺寸系统
  *
  * @param currentZoom 当前变焦倍数
  * @param zoomRange 设备支持的变焦范围
@@ -547,6 +573,8 @@ fun ZoomSlider(
     onZoomChanged: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
+
     // 根据设备实际范围过滤可用的快捷档位
     val availablePresets = ZoomConfig.ZOOM_PRESETS.filter { zoom ->
         zoom >= zoomRange.minZoom && zoom <= zoomRange.maxZoom
@@ -555,18 +583,18 @@ fun ZoomSlider(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = dimens.spacing.xl),                            // 响应式内边距
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 变焦倍数显示
         Text(
             text = ZoomConfig.formatZoom(currentZoom),
-            color = Color.White,
+            color = CameraTheme.Colors.textPrimary,                              // 统一文字颜色
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(dimens.spacing.sm))                    // 响应式间距
 
         // 快捷档位按钮（仅显示设备支持的档位）
         if (availablePresets.isNotEmpty()) {
@@ -583,7 +611,7 @@ fun ZoomSlider(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimens.spacing.sm))                // 响应式间距
         }
 
         // 滑块（使用设备实际范围）
@@ -592,9 +620,9 @@ fun ZoomSlider(
             onValueChange = onZoomChanged,
             valueRange = zoomRange.minZoom..zoomRange.maxZoom,
             colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = ActiveColor,
-                inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                thumbColor = CameraTheme.Colors.textPrimary,                     // 统一滑块颜色
+                activeTrackColor = CameraTheme.Colors.primary,                   // 激活轨道颜色
+                inactiveTrackColor = CameraTheme.Colors.textTertiary             // 未激活轨道颜色
             )
         )
 
@@ -605,12 +633,12 @@ fun ZoomSlider(
         ) {
             Text(
                 text = ZoomConfig.formatZoom(zoomRange.minZoom),
-                color = Color.White.copy(alpha = 0.6f),
+                color = CameraTheme.Colors.textSecondary,                        // 统一提示文字颜色
                 fontSize = 10.sp
             )
             Text(
                 text = ZoomConfig.formatZoom(zoomRange.maxZoom),
-                color = Color.White.copy(alpha = 0.6f),
+                color = CameraTheme.Colors.textSecondary,
                 fontSize = 10.sp
             )
         }
@@ -619,6 +647,8 @@ fun ZoomSlider(
 
 /**
  * 变焦快捷档位按钮
+ *
+ * 使用响应式尺寸系统
  *
  * @param zoom 变焦倍数
  * @param isSelected 是否选中
@@ -631,13 +661,14 @@ private fun ZoomPresetButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (isSelected) ActiveColor else Color.Transparent
-    val textColor = if (isSelected) Color.Black else Color.White
-    val borderColor = if (isSelected) ActiveColor else Color.White.copy(alpha = 0.5f)
+    val dimens = rememberResponsiveDimens()                                      // 响应式尺寸系统
+    val backgroundColor = if (isSelected) CameraTheme.Colors.primary else Color.Transparent
+    val textColor = if (isSelected) CameraTheme.Colors.onPrimary else CameraTheme.Colors.textPrimary
+    val borderColor = if (isSelected) CameraTheme.Colors.primary else CameraTheme.Colors.textSecondary
 
     Box(
         modifier = modifier
-            .size(28.dp)                                                          // 精致化：36→28dp
+            .size(dimens.zoomButtonSize)                                         // 响应式按钮尺寸
             .clip(CircleShape)
             .background(backgroundColor)
             .border(1.dp, borderColor, CircleShape)
@@ -651,8 +682,222 @@ private fun ZoomPresetButton(
         Text(
             text = ZoomConfig.formatZoom(zoom),
             color = textColor,
-            fontSize = 8.sp,                                                      // 精致化：10→8sp
+            fontSize = 8.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+// ==================== Pill样式变焦控件（小米相机风格） ====================
+
+/**
+ * Pill样式变焦选择器（小米相机风格）
+ *
+ * 显示多个预设变焦倍数的胶囊形状选择器
+ * 点击某个倍数直接切换到该倍数
+ *
+ * @param currentZoom 当前变焦倍数
+ * @param zoomRange 设备支持的变焦范围
+ * @param onZoomChanged 变焦改变回调
+ * @param onExpandSlider 点击展开滑块回调
+ * @param modifier 修饰符
+ */
+@Composable
+fun ZoomPillSelector(
+    currentZoom: Float,
+    zoomRange: ZoomRange = ZoomRange(),
+    onZoomChanged: (Float) -> Unit,
+    onExpandSlider: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val dimens = rememberResponsiveDimens()
+
+    // 预设变焦倍数（根据设备范围过滤）
+    val presets = listOf(0.5f, 1f, 2f, 3.2f, 5f).filter { zoom ->
+        zoom >= zoomRange.minZoom && zoom <= zoomRange.maxZoom
+    }
+
+    // 计算当前选中的预设
+    val selectedPreset = presets.minByOrNull { kotlin.math.abs(it - currentZoom) }
+
+    Row(
+        modifier = modifier
+            .background(
+                color = CameraTheme.ZoomControl.pillBackground,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = CameraTheme.ZoomControl.pillBorder,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        presets.forEach { zoom ->
+            val isSelected = selectedPreset == zoom
+            val bgColor = if (isSelected) CameraTheme.Colors.primary else Color.Transparent
+            val txtColor = if (isSelected) CameraTheme.Colors.onPrimary else CameraTheme.Colors.textPrimary
+
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(bgColor)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {
+                            if (isSelected) {
+                                onExpandSlider()                             // 已选中则展开滑块
+                            } else {
+                                onZoomChanged(zoom)                          // 切换到该倍数
+                            }
+                        }
+                    )
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (zoom < 1f) "${(zoom * 10).toInt() / 10.0}x"
+                           else if (zoom == zoom.toInt().toFloat()) "${zoom.toInt()}x"
+                           else "${zoom}x",
+                    color = txtColor,
+                    fontSize = 11.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 带刻度的变焦滑块（小米相机风格）
+ *
+ * 显示带有刻度标记的水平滑块
+ * 刻度对应预设变焦倍数
+ *
+ * @param currentZoom 当前变焦倍数
+ * @param zoomRange 设备支持的变焦范围
+ * @param onZoomChanged 变焦改变回调
+ * @param onDismiss 关闭滑块回调
+ * @param modifier 修饰符
+ */
+@Composable
+fun TickMarkZoomSlider(
+    currentZoom: Float,
+    zoomRange: ZoomRange = ZoomRange(),
+    onZoomChanged: (Float) -> Unit,
+    onDismiss: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val dimens = rememberResponsiveDimens()
+
+    // 预设变焦倍数作为刻度
+    val tickMarks = listOf(0.5f, 1f, 2f, 3f, 4f, 5f, 6f, 8f, 10f).filter { zoom ->
+        zoom >= zoomRange.minZoom && zoom <= zoomRange.maxZoom
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = CameraTheme.ZoomControl.pillBackground,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // 当前变焦倍数显示
+        Text(
+            text = ZoomConfig.formatZoom(currentZoom),
+            color = CameraTheme.Colors.primary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 刻度条
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+        ) {
+            // 刻度线绘制
+            Canvas(modifier = Modifier.fillMaxWidth().height(20.dp).align(Alignment.TopCenter)) {
+                val width = size.width
+                val minZoom = zoomRange.minZoom
+                val maxZoom = zoomRange.maxZoom
+                val range = maxZoom - minZoom
+
+                // 绘制刻度线
+                tickMarks.forEach { zoom ->
+                    val xPos = ((zoom - minZoom) / range) * width
+
+                    // 主刻度（预设值）
+                    drawLine(
+                        color = CameraTheme.ZoomControl.tickMajor,
+                        start = Offset(xPos, 0f),
+                        end = Offset(xPos, 12f),
+                        strokeWidth = 2f
+                    )
+                }
+
+                // 绘制次刻度
+                val step = (range / 20f).coerceAtLeast(0.1f)
+                var tick = minZoom
+                while (tick <= maxZoom) {
+                    val xPos = ((tick - minZoom) / range) * width
+                    if (tickMarks.none { kotlin.math.abs(it - tick) < 0.1f }) {
+                        drawLine(
+                            color = CameraTheme.ZoomControl.tickMinor,
+                            start = Offset(xPos, 0f),
+                            end = Offset(xPos, 6f),
+                            strokeWidth = 1f
+                        )
+                    }
+                    tick += step
+                }
+
+                // 绘制当前位置指示器
+                val currentX = ((currentZoom - minZoom) / range) * width
+                drawCircle(
+                    color = CameraTheme.Colors.primary,
+                    radius = 8f,
+                    center = Offset(currentX, 16f)
+                )
+            }
+
+            // 刻度标签
+            Row(
+                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "${zoomRange.minZoom}x",
+                    color = CameraTheme.Colors.textTertiary,
+                    fontSize = 9.sp
+                )
+                Text(
+                    text = "${zoomRange.maxZoom.toInt()}x",
+                    color = CameraTheme.Colors.textTertiary,
+                    fontSize = 9.sp
+                )
+            }
+        }
+
+        // 滑块控制
+        Slider(
+            value = currentZoom.coerceIn(zoomRange.minZoom, zoomRange.maxZoom),
+            onValueChange = onZoomChanged,
+            valueRange = zoomRange.minZoom..zoomRange.maxZoom,
+            modifier = Modifier.fillMaxWidth(),
+            colors = SliderDefaults.colors(
+                thumbColor = CameraTheme.Colors.primary,
+                activeTrackColor = CameraTheme.Colors.primary,
+                inactiveTrackColor = CameraTheme.Colors.textTertiary.copy(alpha = 0.3f)
+            )
         )
     }
 }
