@@ -1,18 +1,11 @@
+
 <div align="center">
 
 ![萌萌计数器](https://count.getloli.com/get/@FilterCamera?theme=rule34)
 
 </div>
 
-
 # FilterCamera 🎬
-
-<div align="center">
-
-[![Stars](https://img.shields.io/github/stars/Pangu-Immortal/FilterCamera?style=for-the-badge&logo=github&color=yellow)](https://github.com/Pangu-Immortal/FilterCamera)
-[![Forks](https://img.shields.io/github/forks/Pangu-Immortal/FilterCamera?style=for-the-badge&logo=github&color=blue)](https://github.com/Pangu-Immortal/FilterCamera/fork)
-[![访问量](https://komarev.com/ghpvc/?username=Pangu-Immortal-FilterCamera&label=访问量&color=7c3aed&style=for-the-badge)](https://github.com/Pangu-Immortal/FilterCamera)
-</div>
 
 > 实时滤镜相机 - 包含美颜等72种实时滤镜，支持拍照、录像功能
 
@@ -393,12 +386,6 @@ copies or substantial portions of the Software.
 ---
 
 ## ⭐ Star 趋势
-
-<div align="center">
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Pangu-Immortal/FilterCamera&type=Date)](https://star-history.com/#Pangu-Immortal/FilterCamera&Date)
-
-</div>
 
 ## Contributing
 
