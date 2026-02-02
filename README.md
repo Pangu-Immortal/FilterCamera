@@ -1,11 +1,12 @@
 
+
+# FilterCamera 🎬
+
 <div align="center">
 
 ![萌萌计数器](https://count.getloli.com/get/@FilterCamera?theme=rule34)
 
 </div>
-
-# FilterCamera 🎬
 
 > 实时滤镜相机 - 包含美颜等72种实时滤镜，支持拍照、录像功能
 
