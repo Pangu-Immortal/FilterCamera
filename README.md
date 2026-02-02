@@ -1,3 +1,5 @@
+![访客统计](https://count.getloli.com/get/@FilterCamera?theme=rule34)
+
 # FilterCamera 🎬
 
 <div align="center">
@@ -395,3 +397,13 @@ copies or substantial portions of the Software.
 [![Star History Chart](https://api.star-history.com/svg?repos=Pangu-Immortal/FilterCamera&type=Date)](https://star-history.com/#Pangu-Immortal/FilterCamera&Date)
 
 </div>
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
