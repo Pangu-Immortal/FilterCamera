@@ -8,6 +8,10 @@
 
 </div>
 
+<p align="center">
+  <b>🌟 如果觉得有帮助，请点击 <a href="https://github.com/Pangu-Immortal/FilterCamera/stargazers">Star</a> 支持一下，关注不迷路！🌟</b>
+</p>
+
 > 实时滤镜相机 - 包含美颜等72种实时滤镜，支持拍照、录像功能
 
 ## 项目概览
