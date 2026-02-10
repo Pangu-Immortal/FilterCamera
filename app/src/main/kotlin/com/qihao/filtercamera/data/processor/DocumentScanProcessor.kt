@@ -633,20 +633,38 @@ class DocumentScanProcessor @Inject constructor() {
     }
 
     /**
-     * OCR就绪模式
+     * OCR就绪模式（性能优化版）
      *
      * 使用自适应阈值二值化，优化文字识别效果
      * 高对比度黑白，清晰的文字边缘
+     * 性能优化：对大图进行缩放处理，防止ANR
      */
     private fun applyOcrReady(bitmap: Bitmap): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
+        val originalWidth = bitmap.width
+        val originalHeight = bitmap.height
+
+        // 性能优化：自适应阈值算法计算量大，对大图进行缩放
+        val maxProcessSize = 1600                                     // OCR需要清晰度，使用较大尺寸
+        val needsDownscale = originalWidth > maxProcessSize || originalHeight > maxProcessSize
+        val workingBitmap = if (needsDownscale) {
+            val scale = maxProcessSize.toFloat() / max(originalWidth, originalHeight)
+            val scaledWidth = (originalWidth * scale).toInt()
+            val scaledHeight = (originalHeight * scale).toInt()
+            Log.d(TAG, "applyOcrReady: 缩放至 ${scaledWidth}x${scaledHeight} 进行处理")
+            Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+        } else {
+            bitmap
+        }
+
+        val width = workingBitmap.width
+        val height = workingBitmap.height
+        val pixelCount = width * height
 
         // 获取像素并转为灰度
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        val pixels = IntArray(pixelCount)
+        workingBitmap.getPixels(pixels, 0, width, 0, 0, width, height)
 
-        val gray = IntArray(width * height)
+        val gray = IntArray(pixelCount)
         for (i in pixels.indices) {
             val pixel = pixels[i]
             val r = (pixel shr 16) and 0xFF
@@ -655,26 +673,41 @@ class DocumentScanProcessor @Inject constructor() {
             gray[i] = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
         }
 
-        // 自适应阈值二值化（使用局部均值）
+        // 自适应阈值二值化（使用积分图优化）
         val windowSize = 15                                          // 局部窗口大小
         val halfWindow = windowSize / 2
         val threshold = 10                                           // 阈值偏移
 
-        val result = IntArray(width * height)
+        // 构建积分图（用于快速计算局部均值）
+        val integralImage = LongArray(pixelCount)
+        for (y in 0 until height) {
+            var rowSum = 0L
+            for (x in 0 until width) {
+                rowSum += gray[y * width + x]
+                val above = if (y > 0) integralImage[(y - 1) * width + x] else 0L
+                integralImage[y * width + x] = rowSum + above
+            }
+        }
+
+        val result = IntArray(pixelCount)
         for (y in 0 until height) {
             for (x in 0 until width) {
-                // 计算局部均值
-                var sum = 0
-                var count = 0
-                for (wy in -halfWindow..halfWindow) {
-                    for (wx in -halfWindow..halfWindow) {
-                        val nx = (x + wx).coerceIn(0, width - 1)
-                        val ny = (y + wy).coerceIn(0, height - 1)
-                        sum += gray[ny * width + nx]
-                        count++
-                    }
-                }
-                val localMean = sum / count
+                // 使用积分图计算局部均值（O(1)复杂度）
+                val x1 = max(0, x - halfWindow)
+                val y1 = max(0, y - halfWindow)
+                val x2 = min(width - 1, x + halfWindow)
+                val y2 = min(height - 1, y + halfWindow)
+
+                val count = (x2 - x1 + 1) * (y2 - y1 + 1)
+
+                // 积分图查询：sum = I(x2,y2) - I(x1-1,y2) - I(x2,y1-1) + I(x1-1,y1-1)
+                val bottomRight = integralImage[y2 * width + x2]
+                val bottomLeft = if (x1 > 0) integralImage[y2 * width + (x1 - 1)] else 0L
+                val topRight = if (y1 > 0) integralImage[(y1 - 1) * width + x2] else 0L
+                val topLeft = if (x1 > 0 && y1 > 0) integralImage[(y1 - 1) * width + (x1 - 1)] else 0L
+
+                val sum = bottomRight - bottomLeft - topRight + topLeft
+                val localMean = (sum / count).toInt()
 
                 // 二值化：像素值低于局部均值-阈值 则为黑色
                 val pixelValue = gray[y * width + x]
@@ -684,10 +717,20 @@ class DocumentScanProcessor @Inject constructor() {
             }
         }
 
-        val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        resultBitmap.setPixels(result, 0, width, 0, 0, width, height)
+        val processedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        processedBitmap.setPixels(result, 0, width, 0, 0, width, height)
 
-        return resultBitmap
+        // 如果进行了缩放，放大回原尺寸
+        return if (needsDownscale) {
+            val upscaled = Bitmap.createScaledBitmap(processedBitmap, originalWidth, originalHeight, true)
+            processedBitmap.recycle()
+            if (workingBitmap !== bitmap) {
+                workingBitmap.recycle()
+            }
+            upscaled
+        } else {
+            processedBitmap
+        }
     }
 
     /**

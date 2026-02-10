@@ -39,6 +39,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -98,7 +101,7 @@ fun FaceDetectionOverlay(
 private fun DrawScope.drawFaceBox(bounds: NormalizedRect) {
     val left = bounds.left * size.width
     val top = bounds.top * size.height
-    val right = bounds.right * size.height
+    val right = bounds.right * size.width   // 修复：使用width而非height
     val bottom = bounds.bottom * size.height
     val width = right - left
     val height = bottom - top
@@ -678,6 +681,109 @@ fun PortraitModeControlBar(
         )
 
         // 虚化等级快捷按钮
+        PortraitBlurQuickToggle(
+            currentLevel = blurLevel,
+            onClick = onBlurToggle
+        )
+    }
+}
+
+// ==================== 美颜快捷按钮 ====================
+
+/**
+ * 美颜快捷切换按钮
+ *
+ * 紧凑型按钮，点击循环切换美颜等级
+ * 设计简洁，不遮挡预览画面
+ *
+ * @param currentLevel 当前美颜等级
+ * @param onClick 点击回调
+ * @param modifier 修饰符
+ */
+@Composable
+fun BeautyQuickToggle(
+    currentLevel: BeautyLevel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = rememberResponsiveDimens()
+    val isEnabled = currentLevel != BeautyLevel.OFF
+
+    Box(
+        modifier = modifier
+            .size(dimens.minTouchTarget)
+            .clip(CircleShape)
+            .background(
+                if (isEnabled) OverlayColors.accentOrange.copy(alpha = 0.9f)
+                else Color.White.copy(alpha = 0.2f)
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 美颜图标（使用 Material Icon 替代 emoji，提升跨设备一致性）
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = "美颜",
+                tint = if (isEnabled) Color.Black else Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+            // 当前等级
+            Text(
+                text = if (currentLevel == BeautyLevel.OFF) "关" else "${currentLevel.level}",
+                color = if (isEnabled) Color.Black else Color.White.copy(alpha = 0.8f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+// ==================== 紧凑型人像模式控制条 ====================
+
+/**
+ * 紧凑型人像模式控制条
+ *
+ * 简洁设计，整合美颜和虚化控制
+ * 底部水平排列，不遮挡预览画面
+ *
+ * @param beautyLevel 当前美颜等级
+ * @param blurLevel 当前虚化等级
+ * @param onBeautyToggle 美颜等级切换回调
+ * @param onBlurToggle 虚化等级切换回调
+ * @param modifier 修饰符
+ */
+@Composable
+fun CompactPortraitControls(
+    beautyLevel: BeautyLevel,
+    blurLevel: PortraitBlurLevel,
+    onBeautyToggle: () -> Unit,
+    onBlurToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .background(
+                color = Color.Black.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(24.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // 美颜快捷按钮
+        BeautyQuickToggle(
+            currentLevel = beautyLevel,
+            onClick = onBeautyToggle
+        )
+
+        // 虚化快捷按钮
         PortraitBlurQuickToggle(
             currentLevel = blurLevel,
             onClick = onBlurToggle

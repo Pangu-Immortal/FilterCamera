@@ -89,6 +89,39 @@ enum class CameraMode(
          */
         fun isTimelapseMode(mode: CameraMode): Boolean = mode == TIMELAPSE
     }
+
+    // ==================== 功能支持判断（用于UI菜单过滤） ====================
+
+    /**
+     * 判断当前模式是否支持HDR功能
+     * 仅拍照和专业模式支持HDR
+     */
+    fun supportsHdr(): Boolean = this == PHOTO || this == PRO
+
+    /**
+     * 判断当前模式是否支持定时器功能
+     * 拍照、人像、夜景、专业模式支持定时器
+     * 录像和文档模式不支持
+     */
+    fun supportsTimer(): Boolean = when (this) {
+        PHOTO, PORTRAIT, NIGHT, PRO -> true
+        VIDEO, DOCUMENT, TIMELAPSE -> false
+    }
+
+    /**
+     * 判断当前模式是否支持画幅调节
+     * 人像和文档模式使用固定画幅
+     */
+    fun supportsAspectRatio(): Boolean = when (this) {
+        PORTRAIT, DOCUMENT -> false
+        else -> true
+    }
+
+    /**
+     * 判断当前模式是否支持滤镜功能
+     * 文档模式使用专用滤镜，不显示通用滤镜菜单
+     */
+    fun supportsFilter(): Boolean = this != DOCUMENT
 }
 
 /**
@@ -165,6 +198,7 @@ data class CameraState(
     val documentScanMode: DocumentScanMode = DocumentScanMode.AUTO_ENHANCE, // 文档扫描模式
     val isDocumentAutoCapture: Boolean = false,                       // 是否启用文档自动捕获
     val isDocumentScanModeSelectorVisible: Boolean = false,           // 文档扫描模式选择器可见性
+    val isModeMenuVisible: Boolean = false,                           // 模式菜单可见性（整合HDR/定时器/画幅/滤镜）
     val isHistogramVisible: Boolean = false,                          // 直方图是否可见（专业模式）
     val focusPoint: Offset? = null,                                   // 触摸对焦点位置（归一化坐标）
     val isFocusing: Boolean = false,                                  // 是否正在对焦中

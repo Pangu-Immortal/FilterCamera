@@ -80,10 +80,15 @@ class ProModeStateHolder(
 
     init {
         Log.d(TAG, "init: 专业模式状态管理器初始化")
-        // 获取曝光补偿范围
-        val range = useCase.getExposureCompensationRange()
-        _state.update { it.copy(exposureRange = range) }
-        Log.d(TAG, "init: 曝光补偿范围 min=${range.first}, max=${range.second}, step=${range.third}")
+        // 修复：使用runCatching保护useCase调用，防止初始化异常导致闪退
+        runCatching {
+            val range = useCase.getExposureCompensationRange()
+            _state.update { it.copy(exposureRange = range) }
+            Log.d(TAG, "init: 曝光补偿范围 min=${range.first}, max=${range.second}, step=${range.third}")
+        }.onFailure { error ->
+            Log.e(TAG, "init: 获取曝光补偿范围失败，使用默认值", error)
+            // 使用默认值，不崩溃
+        }
     }
 
     // ==================== 面板控制 ====================

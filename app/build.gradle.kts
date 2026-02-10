@@ -132,6 +132,9 @@ dependencies {
     // ML Kit人物分割（人像虚化）
     implementation(libs.mlkit.selfie.segmentation)
 
+    // ML Kit文档扫描器（文档模式高级功能）
+    implementation(libs.mlkit.document.scanner)
+
     // DataStore持久化（设置存储）
     implementation(libs.androidx.datastore.preferences)
 

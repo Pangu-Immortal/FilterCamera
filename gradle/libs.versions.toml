@@ -42,6 +42,7 @@ gpuimage = "2.1.0"
 # ML Kit
 mlkitFaceDetection = "16.1.7"
 mlkitSelfieSegmentation = "16.0.0-beta6"
+mlkitDocumentScanner = "16.0.0-beta1"
 
 # DataStore
 datastore = "1.1.1"
@@ -108,6 +109,8 @@ gpuimage = { group = "jp.co.cyberagent.android", name = "gpuimage", version.ref 
 mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkitFaceDetection" }
 # ML Kit人物分割（人像虚化）
 mlkit-selfie-segmentation = { group = "com.google.mlkit", name = "segmentation-selfie", version.ref = "mlkitSelfieSegmentation" }
+# ML Kit文档扫描器
+mlkit-document-scanner = { group = "com.google.android.gms", name = "play-services-mlkit-document-scanner", version.ref = "mlkitDocumentScanner" }
 
 # DataStore持久化
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }

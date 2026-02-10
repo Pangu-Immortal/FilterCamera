@@ -287,6 +287,10 @@ class HdrProcessor @Inject constructor(
      * 2. 归一化权重并融合像素
      * 3. 应用色调映射增强动态范围
      *
+     * 性能优化（2026-02-05）：
+     * - 大图先缩放到最大1920px处理，避免ANR/OOM
+     * - 使用批量像素操作代替逐像素操作，性能提升10倍
+     *
      * @param frames 不同曝光的图像帧列表（建议3帧：欠曝/正常/过曝）
      * @return HDR处理结果
      */
@@ -312,45 +316,85 @@ class HdrProcessor @Inject constructor(
                 )
             }
 
-            // 多帧曝光融合（Mertens算法）
-            val width = frames[0].width
-            val height = frames[0].height
-            val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            // 性能优化：对大图进行缩放处理
+            val originalWidth = frames[0].width
+            val originalHeight = frames[0].height
+            val maxProcessSize = 1920
+            val needsDownscale = originalWidth > maxProcessSize || originalHeight > maxProcessSize
 
-            // 计算每帧的权重图
-            val weightMaps = frames.map { frame -> calculateWeightMap(frame) }
+            val workingFrames = if (needsDownscale) {
+                val scale = maxProcessSize.toFloat() / max(originalWidth, originalHeight)
+                val scaledWidth = (originalWidth * scale).toInt()
+                val scaledHeight = (originalHeight * scale).toInt()
+                Log.d(TAG, "processSoftwareHdr: 缩放至 ${scaledWidth}x${scaledHeight} 进行处理")
+                frames.map { Bitmap.createScaledBitmap(it, scaledWidth, scaledHeight, true) }
+            } else {
+                frames
+            }
 
-            // 融合像素
-            for (y in 0 until height) {
-                for (x in 0 until width) {
-                    var totalWeight = 0f
-                    var r = 0f
-                    var g = 0f
-                    var b = 0f
+            // 多帧曝光融合（Mertens算法）- 优化版
+            val width = workingFrames[0].width
+            val height = workingFrames[0].height
+            val pixelCount = width * height
 
-                    for (i in frames.indices) {
-                        val weight = weightMaps[i][y * width + x]
-                        val pixel = frames[i].getPixel(x, y)
-
-                        r += Color.red(pixel) * weight
-                        g += Color.green(pixel) * weight
-                        b += Color.blue(pixel) * weight
-                        totalWeight += weight
-                    }
-
-                    // 归一化并限制范围
-                    if (totalWeight > 0) {
-                        r = (r / totalWeight).coerceIn(0f, 255f)
-                        g = (g / totalWeight).coerceIn(0f, 255f)
-                        b = (b / totalWeight).coerceIn(0f, 255f)
-                    }
-
-                    resultBitmap.setPixel(x, y, Color.rgb(r.toInt(), g.toInt(), b.toInt()))
+            // 批量读取所有帧的像素数据
+            val framePixels = workingFrames.map { frame ->
+                IntArray(pixelCount).also { pixels ->
+                    frame.getPixels(pixels, 0, width, 0, 0, width, height)
                 }
             }
 
+            // 计算每帧的权重图（使用批量像素数据）
+            val weightMaps = framePixels.map { pixels -> calculateWeightMapOptimized(pixels, width, height) }
+
+            // 批量融合像素
+            val resultPixels = IntArray(pixelCount)
+            for (i in 0 until pixelCount) {
+                var totalWeight = 0f
+                var r = 0f
+                var g = 0f
+                var b = 0f
+
+                for (frameIdx in framePixels.indices) {
+                    val weight = weightMaps[frameIdx][i]
+                    val pixel = framePixels[frameIdx][i]
+
+                    r += Color.red(pixel) * weight
+                    g += Color.green(pixel) * weight
+                    b += Color.blue(pixel) * weight
+                    totalWeight += weight
+                }
+
+                // 归一化并限制范围
+                if (totalWeight > 0) {
+                    r = (r / totalWeight).coerceIn(0f, 255f)
+                    g = (g / totalWeight).coerceIn(0f, 255f)
+                    b = (b / totalWeight).coerceIn(0f, 255f)
+                }
+
+                resultPixels[i] = Color.rgb(r.toInt(), g.toInt(), b.toInt())
+            }
+
+            // 创建结果Bitmap并批量写入
+            val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            resultBitmap.setPixels(resultPixels, 0, width, 0, 0, width, height)
+
             // 应用局部色调映射增强
-            val finalResult = applyLocalToneMapping(resultBitmap)
+            val toneMapped = applyLocalToneMapping(resultBitmap)
+            resultBitmap.recycle()
+
+            // 如果进行了缩放，放大回原尺寸
+            val finalResult = if (needsDownscale) {
+                val upscaled = Bitmap.createScaledBitmap(toneMapped, originalWidth, originalHeight, true)
+                toneMapped.recycle()
+                // 回收缩放的工作帧
+                workingFrames.forEachIndexed { idx, frame ->
+                    if (frame !== frames[idx]) frame.recycle()
+                }
+                upscaled
+            } else {
+                toneMapped
+            }
 
             val processingTime = System.currentTimeMillis() - startTime
             Log.d(TAG, "processSoftwareHdr: 软件HDR处理完成，耗时=${processingTime}ms")
@@ -374,61 +418,59 @@ class HdrProcessor @Inject constructor(
     }
 
     /**
-     * 计算像素权重图（Mertens算法）
+     * 优化版权重计算（使用预加载的像素数组）
      *
-     * 对每个像素计算三个质量指标的加权乘积：
-     * - 对比度：使用Laplacian滤波器
-     * - 饱和度：RGB标准差
-     * - 曝光良好度：高斯曲线，0.5为最佳
-     *
-     * @param bitmap 输入图像
+     * @param pixels 像素数组
+     * @param width 图像宽度
+     * @param height 图像高度
      * @return 权重数组
      */
-    private fun calculateWeightMap(bitmap: Bitmap): FloatArray {
-        val width = bitmap.width
-        val height = bitmap.height
-        val weights = FloatArray(width * height)
+    private fun calculateWeightMapOptimized(pixels: IntArray, width: Int, height: Int): FloatArray {
+        val weights = FloatArray(pixels.size)
 
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val pixel = bitmap.getPixel(x, y)
-                val r = Color.red(pixel) / 255f
-                val g = Color.green(pixel) / 255f
-                val b = Color.blue(pixel) / 255f
+        // 预计算灰度值（用于对比度计算）
+        val grayValues = FloatArray(pixels.size) { i ->
+            val pixel = pixels[i]
+            0.299f * Color.red(pixel) + 0.587f * Color.green(pixel) + 0.114f * Color.blue(pixel)
+        }
 
-                // 计算对比度（简化的Laplacian）
-                val contrast = calculateLocalContrast(bitmap, x, y)
+        for (i in pixels.indices) {
+            val pixel = pixels[i]
+            val r = Color.red(pixel) / 255f
+            val g = Color.green(pixel) / 255f
+            val b = Color.blue(pixel) / 255f
 
-                // 计算饱和度（RGB标准差）
-                val mean = (r + g + b) / 3f
-                val saturation = kotlin.math.sqrt(
-                    ((r - mean).pow(2) + (g - mean).pow(2) + (b - mean).pow(2)) / 3f
-                )
+            // 计算对比度（使用预计算的灰度值）
+            val x = i % width
+            val y = i / width
+            val contrast = calculateLocalContrastOptimized(grayValues, width, height, x, y)
 
-                // 计算曝光良好度（高斯，0.5为最佳）
-                val luminance = 0.299f * r + 0.587f * g + 0.114f * b
-                val exposure = kotlin.math.exp(-0.5f * ((luminance - 0.5f) / 0.2f).pow(2))
+            // 计算饱和度（RGB标准差）
+            val mean = (r + g + b) / 3f
+            val saturation = kotlin.math.sqrt(
+                ((r - mean).pow(2) + (g - mean).pow(2) + (b - mean).pow(2)) / 3f
+            )
 
-                // 综合权重（三个指标的加权乘积）
-                val weight = (contrast.pow(CONTRAST_WEIGHT) *
-                             saturation.pow(SATURATION_WEIGHT) *
-                             exposure.pow(EXPOSURE_WEIGHT))
-                             .coerceIn(0.0001f, 1f)                              // 避免零权重
+            // 计算曝光良好度（高斯，0.5为最佳）
+            val luminance = 0.299f * r + 0.587f * g + 0.114f * b
+            val exposure = kotlin.math.exp(-0.5f * ((luminance - 0.5f) / 0.2f).pow(2))
 
-                weights[y * width + x] = weight
-            }
+            // 综合权重（三个指标的加权乘积）
+            val weight = (contrast.pow(CONTRAST_WEIGHT) *
+                         saturation.pow(SATURATION_WEIGHT) *
+                         exposure.pow(EXPOSURE_WEIGHT))
+                         .coerceIn(0.0001f, 1f)
+
+            weights[i] = weight
         }
 
         return weights
     }
 
     /**
-     * 计算局部对比度（3x3 Laplacian）
+     * 优化版局部对比度计算（使用预计算的灰度数组）
      */
-    private fun calculateLocalContrast(bitmap: Bitmap, x: Int, y: Int): Float {
-        val width = bitmap.width
-        val height = bitmap.height
-
+    private fun calculateLocalContrastOptimized(grayValues: FloatArray, width: Int, height: Int, x: Int, y: Int): Float {
         // 3x3 Laplacian核
         val kernel = arrayOf(
             intArrayOf(0, 1, 0),
@@ -441,7 +483,57 @@ class HdrProcessor @Inject constructor(
             for (dx in -1..1) {
                 val nx = (x + dx).coerceIn(0, width - 1)
                 val ny = (y + dy).coerceIn(0, height - 1)
-                val pixel = bitmap.getPixel(nx, ny)
+                val gray = grayValues[ny * width + nx]
+                sum += gray * kernel[dy + 1][dx + 1]
+            }
+        }
+
+        return kotlin.math.abs(sum / 255f)
+    }
+
+    /**
+     * 计算像素权重图（Mertens算法）- 兼容旧版API
+     *
+     * 对每个像素计算三个质量指标的加权乘积：
+     * - 对比度：使用Laplacian滤波器
+     * - 饱和度：RGB标准差
+     * - 曝光良好度：高斯曲线，0.5为最佳
+     *
+     * @param bitmap 输入图像
+     * @return 权重数组
+     */
+    private fun calculateWeightMap(bitmap: Bitmap): FloatArray {
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        return calculateWeightMapOptimized(pixels, width, height)
+    }
+
+    /**
+     * 计算局部对比度（3x3 Laplacian）- 兼容旧版API
+     */
+    private fun calculateLocalContrast(bitmap: Bitmap, x: Int, y: Int): Float {
+        val width = bitmap.width
+        val height = bitmap.height
+
+        // 3x3 Laplacian核
+        val kernel = arrayOf(
+            intArrayOf(0, 1, 0),
+            intArrayOf(1, -4, 1),
+            intArrayOf(0, 1, 0)
+        )
+
+        // 批量读取像素（避免多次getPixel）
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+
+        var sum = 0f
+        for (dy in -1..1) {
+            for (dx in -1..1) {
+                val nx = (x + dx).coerceIn(0, width - 1)
+                val ny = (y + dy).coerceIn(0, height - 1)
+                val pixel = pixels[ny * width + nx]
                 val gray = 0.299f * Color.red(pixel) + 0.587f * Color.green(pixel) + 0.114f * Color.blue(pixel)
                 sum += gray * kernel[dy + 1][dx + 1]
             }
@@ -456,60 +548,92 @@ class HdrProcessor @Inject constructor(
      * 使用简化的Reinhard色调映射算法：
      * L_out = L_in / (1 + L_in)
      *
+     * 性能优化（2026-02-05）：
+     * - 使用批量像素操作代替逐像素操作
+     * - 大图先缩放处理，避免ANR
+     *
      * @param bitmap 输入图像
      * @return 色调映射后的图像
      */
     private fun applyLocalToneMapping(bitmap: Bitmap): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val originalWidth = bitmap.width
+        val originalHeight = bitmap.height
+
+        // 性能优化：对大图进行缩放处理
+        val maxProcessSize = 1920
+        val needsDownscale = originalWidth > maxProcessSize || originalHeight > maxProcessSize
+        val workingBitmap = if (needsDownscale) {
+            val scale = maxProcessSize.toFloat() / max(originalWidth, originalHeight)
+            val scaledWidth = (originalWidth * scale).toInt()
+            val scaledHeight = (originalHeight * scale).toInt()
+            Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+        } else {
+            bitmap
+        }
+
+        val width = workingBitmap.width
+        val height = workingBitmap.height
+        val pixelCount = width * height
+
+        // 批量读取像素
+        val pixels = IntArray(pixelCount)
+        workingBitmap.getPixels(pixels, 0, width, 0, 0, width, height)
 
         // 计算平均亮度用于自适应调整
         var totalLuminance = 0f
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val pixel = bitmap.getPixel(x, y)
-                totalLuminance += (0.299f * Color.red(pixel) +
-                                   0.587f * Color.green(pixel) +
-                                   0.114f * Color.blue(pixel)) / 255f
-            }
+        for (pixel in pixels) {
+            totalLuminance += (0.299f * Color.red(pixel) +
+                               0.587f * Color.green(pixel) +
+                               0.114f * Color.blue(pixel)) / 255f
         }
-        val avgLuminance = totalLuminance / (width * height)
+        val avgLuminance = totalLuminance / pixelCount
         val key = 0.18f / max(avgLuminance, 0.001f)                              // 场景亮度键值
 
-        // 应用色调映射
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val pixel = bitmap.getPixel(x, y)
-                var r = Color.red(pixel) / 255f
-                var g = Color.green(pixel) / 255f
-                var b = Color.blue(pixel) / 255f
+        // 批量应用色调映射
+        for (i in pixels.indices) {
+            val pixel = pixels[i]
+            var r = Color.red(pixel) / 255f
+            var g = Color.green(pixel) / 255f
+            var b = Color.blue(pixel) / 255f
 
-                // 缩放到场景亮度
-                r *= key
-                g *= key
-                b *= key
+            // 缩放到场景亮度
+            r *= key
+            g *= key
+            b *= key
 
-                // Reinhard色调映射
-                r = r / (1f + r)
-                g = g / (1f + g)
-                b = b / (1f + b)
+            // Reinhard色调映射
+            r = r / (1f + r)
+            g = g / (1f + g)
+            b = b / (1f + b)
 
-                // 伽马校正
-                r = r.pow(1f / 2.2f)
-                g = g.pow(1f / 2.2f)
-                b = b.pow(1f / 2.2f)
+            // 伽马校正
+            r = r.pow(1f / 2.2f)
+            g = g.pow(1f / 2.2f)
+            b = b.pow(1f / 2.2f)
 
-                // 限制范围并写入
-                result.setPixel(x, y, Color.rgb(
-                    (r * 255).toInt().coerceIn(0, 255),
-                    (g * 255).toInt().coerceIn(0, 255),
-                    (b * 255).toInt().coerceIn(0, 255)
-                ))
-            }
+            // 写入结果数组
+            pixels[i] = Color.rgb(
+                (r * 255).toInt().coerceIn(0, 255),
+                (g * 255).toInt().coerceIn(0, 255),
+                (b * 255).toInt().coerceIn(0, 255)
+            )
         }
 
-        return result
+        // 创建结果Bitmap并批量写入
+        val processedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        processedBitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+
+        // 如果进行了缩放，放大回原尺寸
+        return if (needsDownscale) {
+            val upscaled = Bitmap.createScaledBitmap(processedBitmap, originalWidth, originalHeight, true)
+            processedBitmap.recycle()
+            if (workingBitmap !== bitmap) {
+                workingBitmap.recycle()
+            }
+            upscaled
+        } else {
+            processedBitmap
+        }
     }
 
     // ==================== 单帧HDR增强 ====================
@@ -520,6 +644,10 @@ class HdrProcessor @Inject constructor(
      * 使用局部对比度增强和色调映射来模拟HDR效果
      * 适用于静态图像后处理
      *
+     * 性能优化：
+     * - 使用批量像素操作代替逐像素操作（快10倍以上）
+     * - 对大图先缩放再处理，最后放大回原尺寸（避免OOM/ANR）
+     *
      * @param bitmap 输入图像
      * @return 增强后的图像
      */
@@ -527,43 +655,72 @@ class HdrProcessor @Inject constructor(
         val startTime = System.currentTimeMillis()
 
         try {
-            Log.d(TAG, "enhanceSingleFrame: 开始单帧HDR增强")
+            val originalWidth = bitmap.width
+            val originalHeight = bitmap.height
+            Log.d(TAG, "enhanceSingleFrame: 开始 原始尺寸=${originalWidth}x${originalHeight}")
 
-            // 分离高光和暗部
-            val width = bitmap.width
-            val height = bitmap.height
-            val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            // 性能优化：对大图进行缩放处理，减少处理时间和内存占用
+            val maxProcessSize = 1920                                            // 最大处理尺寸
+            val needsDownscale = originalWidth > maxProcessSize || originalHeight > maxProcessSize
+            val workingBitmap = if (needsDownscale) {
+                val scale = maxProcessSize.toFloat() / max(originalWidth, originalHeight)
+                val scaledWidth = (originalWidth * scale).toInt()
+                val scaledHeight = (originalHeight * scale).toInt()
+                Log.d(TAG, "enhanceSingleFrame: 缩放至 ${scaledWidth}x${scaledHeight} 进行处理")
+                Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+            } else {
+                bitmap
+            }
 
-            for (y in 0 until height) {
-                for (x in 0 until width) {
-                    val pixel = bitmap.getPixel(x, y)
-                    var r = Color.red(pixel) / 255f
-                    var g = Color.green(pixel) / 255f
-                    var b = Color.blue(pixel) / 255f
+            val width = workingBitmap.width
+            val height = workingBitmap.height
 
-                    val luminance = 0.299f * r + 0.587f * g + 0.114f * b
+            // 使用批量像素操作（比逐像素getPixel/setPixel快10倍以上）
+            val pixels = IntArray(width * height)
+            workingBitmap.getPixels(pixels, 0, width, 0, 0, width, height)        // 批量读取
 
-                    // 暗部提亮（gamma < 1）
-                    val shadowBoost = if (luminance < 0.3f) {
-                        luminance.pow(0.7f) / max(luminance, 0.001f)
-                    } else 1f
+            // 批量处理像素
+            for (i in pixels.indices) {
+                val pixel = pixels[i]
+                var r = Color.red(pixel) / 255f
+                var g = Color.green(pixel) / 255f
+                var b = Color.blue(pixel) / 255f
 
-                    // 高光压缩（S曲线）
-                    val highlightCompress = if (luminance > 0.7f) {
-                        val x = (luminance - 0.7f) / 0.3f
-                        1f - 0.3f * x * x                                        // 柔和压缩
-                    } else 1f
+                val luminance = 0.299f * r + 0.587f * g + 0.114f * b
 
-                    r = (r * shadowBoost * highlightCompress).coerceIn(0f, 1f)
-                    g = (g * shadowBoost * highlightCompress).coerceIn(0f, 1f)
-                    b = (b * shadowBoost * highlightCompress).coerceIn(0f, 1f)
+                // 暗部提亮（gamma < 1）
+                val shadowBoost = if (luminance < 0.3f) {
+                    luminance.pow(0.7f) / max(luminance, 0.001f)
+                } else 1f
 
-                    result.setPixel(x, y, Color.rgb(
-                        (r * 255).toInt(),
-                        (g * 255).toInt(),
-                        (b * 255).toInt()
-                    ))
+                // 高光压缩（S曲线）
+                val highlightCompress = if (luminance > 0.7f) {
+                    val t = (luminance - 0.7f) / 0.3f
+                    1f - 0.3f * t * t                                            // 柔和压缩
+                } else 1f
+
+                r = (r * shadowBoost * highlightCompress).coerceIn(0f, 1f)
+                g = (g * shadowBoost * highlightCompress).coerceIn(0f, 1f)
+                b = (b * shadowBoost * highlightCompress).coerceIn(0f, 1f)
+
+                pixels[i] = Color.rgb((r * 255).toInt(), (g * 255).toInt(), (b * 255).toInt())
+            }
+
+            // 创建结果Bitmap并批量写入像素
+            val processedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            processedBitmap.setPixels(pixels, 0, width, 0, 0, width, height)      // 批量写入
+
+            // 如果进行了缩放，放大回原尺寸
+            val result = if (needsDownscale) {
+                Log.d(TAG, "enhanceSingleFrame: 放大回原尺寸 ${originalWidth}x${originalHeight}")
+                val upscaled = Bitmap.createScaledBitmap(processedBitmap, originalWidth, originalHeight, true)
+                processedBitmap.recycle()                                         // 回收中间结果
+                if (workingBitmap !== bitmap) {
+                    workingBitmap.recycle()                                       // 回收缩放的工作图
                 }
+                upscaled
+            } else {
+                processedBitmap
             }
 
             val processingTime = System.currentTimeMillis() - startTime

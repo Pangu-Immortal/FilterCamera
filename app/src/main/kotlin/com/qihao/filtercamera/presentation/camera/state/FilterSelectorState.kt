@@ -71,11 +71,21 @@ class FilterSelectorStateHolder(
     val isPanelVisible: Boolean get() = _state.value.isPanelVisible
     val thumbnails: Map<FilterType, Bitmap?> get() = _state.value.thumbnails
 
-    // 可用滤镜分组（相机页面不显示调整分组）
-    val availableGroups: List<FilterGroup> = FilterGroup.getCameraGroups()
+    // 可用滤镜分组（相机页面不显示调整分组）- 修复：添加异常保护
+    val availableGroups: List<FilterGroup> = runCatching {
+        FilterGroup.getCameraGroups()
+    }.getOrElse {
+        Log.e(TAG, "获取滤镜分组失败", it)
+        emptyList()
+    }
 
-    // 可用滤镜列表
-    val availableFilters: List<FilterType> = useCase.availableFilters()
+    // 可用滤镜列表 - 修复：添加异常保护
+    val availableFilters: List<FilterType> = runCatching {
+        useCase.availableFilters()
+    }.getOrElse {
+        Log.e(TAG, "获取可用滤镜列表失败", it)
+        emptyList()
+    }
 
     // 当前预览帧（用于生成缩略图）
     private var currentPreviewFrame: Bitmap? = null

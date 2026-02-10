@@ -23,11 +23,20 @@
 package com.qihao.filtercamera.presentation.camera
 
 import android.Manifest
+import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -62,6 +71,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -83,8 +93,8 @@ import com.qihao.filtercamera.domain.model.CameraMode
 import com.qihao.filtercamera.domain.model.FilterType
 import com.qihao.filtercamera.domain.model.AspectRatio
 import com.qihao.filtercamera.domain.model.HdrMode
-import com.qihao.filtercamera.presentation.camera.components.BeautySlider
 import com.qihao.filtercamera.presentation.camera.components.CameraModeSelector
+import com.qihao.filtercamera.presentation.camera.components.CompactCameraTopBar
 import com.qihao.filtercamera.presentation.camera.components.CompactHistogramView
 import com.qihao.filtercamera.presentation.camera.components.DocumentBoundsOverlay
 import com.qihao.filtercamera.presentation.camera.components.DocumentModeHint
@@ -94,12 +104,11 @@ import com.qihao.filtercamera.presentation.camera.components.FaceDetectionOverla
 import com.qihao.filtercamera.presentation.camera.components.FaceTrackingStateIndicator
 import com.qihao.filtercamera.presentation.camera.components.FocusIndicator
 import com.qihao.filtercamera.presentation.camera.components.NewCameraBottomControls
-import com.qihao.filtercamera.presentation.camera.components.NewCameraTopBar
 import com.qihao.filtercamera.presentation.camera.components.NightModeHint
 import com.qihao.filtercamera.presentation.camera.components.NightProcessingIndicator
 import com.qihao.filtercamera.presentation.camera.components.PermissionRequest
-import com.qihao.filtercamera.presentation.camera.components.PortraitBlurLevelSelector
 import com.qihao.filtercamera.presentation.camera.components.PortraitBlurProcessingIndicator
+import com.qihao.filtercamera.presentation.camera.components.CompactPortraitControls
 import com.qihao.filtercamera.presentation.camera.components.PortraitModeHint
 import com.qihao.filtercamera.presentation.camera.components.ProModeControlPanel
 import com.qihao.filtercamera.presentation.camera.components.TimelapseControlPanel
@@ -111,7 +120,17 @@ import com.qihao.filtercamera.presentation.camera.components.ZoomSlider
 import com.qihao.filtercamera.presentation.camera.components.iOSFilterSelector
 import com.qihao.filtercamera.presentation.common.theme.CameraTheme
 import com.qihao.filtercamera.presentation.common.theme.rememberResponsiveDimens
+import com.qihao.filtercamera.data.processor.ScanState
+import com.qihao.filtercamera.data.processor.MLKitScanResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private const val TAG = "CameraScreen"  // 日志标签
 
@@ -132,12 +151,20 @@ fun CameraScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
-    // 权限请求
+    // 权限请求 - 根据Android版本请求不同的存储权限
     val permissionsState = rememberMultiplePermissionsState(
-        permissions = listOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-        )
+        permissions = buildList {
+            add(Manifest.permission.CAMERA)
+            add(Manifest.permission.RECORD_AUDIO)
+            // Android 13+ 使用细粒度媒体权限
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.READ_MEDIA_IMAGES)
+                add(Manifest.permission.READ_MEDIA_VIDEO)
+            } else {
+                // Android 12及以下使用传统存储权限
+                add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
     )
 
     // 处理事件（拍照完成、录像完成、错误等）
@@ -170,18 +197,87 @@ fun CameraScreen(
         }
     }
 
+    // ML Kit 文档扫描器 ActivityResultLauncher
+    val mlKitScannerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        Log.d(TAG, "ML Kit Scanner result: resultCode=${result.resultCode}")
+        viewModel.handleMLKitScanResult(result.resultCode, result.data)
+    }
+
+    // 观察 ML Kit 扫描状态
+    val mlKitScanState by viewModel.mlKitScanState.collectAsState()
+
+    // 协程作用域用于保存文件
+    val scope = rememberCoroutineScope()
+
+    // 处理 ML Kit 扫描结果
+    LaunchedEffect(mlKitScanState) {
+        when (val state = mlKitScanState) {
+            is ScanState.Success -> {
+                val result = state.result
+                Log.d(TAG, "ML Kit 扫描成功: pages=${result.pageCount} hasPdf=${result.pdfUri != null}")
+
+                // 保存扫描的图片到相册
+                scope.launch {
+                    try {
+                        var savedCount = 0
+                        for ((index, pageUri) in result.pages.withIndex()) {
+                            val saved = saveScannedImageToGallery(context, pageUri, index + 1)
+                            if (saved) savedCount++
+                        }
+
+                        // 保存 PDF（如果有）
+                        var pdfSaved = false
+                        if (result.pdfUri != null) {
+                            pdfSaved = saveScannedPdfToDocuments(context, result.pdfUri)
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            val message = buildString {
+                                append("扫描完成！")
+                                if (savedCount > 0) append(" $savedCount 张图片已保存到相册")
+                                if (pdfSaved) append("，PDF已保存到文档")
+                            }
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "保存扫描结果失败", e)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "保存失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                viewModel.resetMLKitScanState()                              // 重置状态
+            }
+            is ScanState.Error -> {
+                Log.e(TAG, "ML Kit 扫描错误: ${state.message}")
+                Toast.makeText(context, "扫描失败: ${state.message}", Toast.LENGTH_SHORT).show()
+                viewModel.resetMLKitScanState()
+            }
+            is ScanState.Cancelled -> {
+                Log.d(TAG, "ML Kit 扫描取消")
+                viewModel.resetMLKitScanState()
+            }
+            else -> { /* Idle 或 Scanning 状态不处理 */ }
+        }
+    }
+
     // 主界面容器
     Box(modifier = Modifier.fillMaxSize()) {
+        // 修复：使用firstOrNull避免NoSuchElementException
         val hasCameraPermission = permissionsState.permissions
-            .first { it.permission == Manifest.permission.CAMERA }
-            .status.isGranted
+            .firstOrNull { it.permission == Manifest.permission.CAMERA }
+            ?.status?.isGranted ?: false
 
         if (hasCameraPermission) {
             CameraContent(                                                // 相机内容
                 uiState = uiState,
                 viewModel = viewModel,
                 onNavigateToGallery = onNavigateToGallery,
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
+                mlKitScannerLauncher = mlKitScannerLauncher               // ML Kit 扫描器
             )
         } else {
             PermissionRequest(                                            // 权限请求UI
@@ -212,6 +308,7 @@ private fun CameraContent(
     viewModel: CameraViewModel,
     onNavigateToGallery: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    mlKitScannerLauncher: androidx.activity.result.ActivityResultLauncher<IntentSenderRequest>,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current                                    // 获取Context用于打开相册
@@ -275,51 +372,51 @@ private fun CameraContent(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-        }
 
-        // 2.3 触摸对焦检测层 - 仅在没有弹窗时响应触摸对焦
-        // 用户触摸预览区域时，对焦框跟随手指移动，抬起时触发对焦
-        if (!uiState.isSettingsPanelExpanded && !uiState.isFilterSelectorVisible &&
-            !uiState.isZoomSliderVisible &&
-            !(uiState.mode == CameraMode.PRO && uiState.isProPanelVisible)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        awaitEachGesture {
-                            // 等待按下事件
-                            val down = awaitFirstDown(requireUnconsumed = false)
-                            val downOffset = down.position
-                            val normalizedX = downOffset.x / size.width
-                            val normalizedY = downOffset.y / size.height
-                            // 按下时立即显示对焦框
-                            viewModel.updateFocusPointPreview(normalizedX, normalizedY)
+            // 1.3 触摸对焦检测层 - 限制在预览区域内，仅响应预览区域的触摸
+            // 修复：将触摸检测移到预览Box内，解决画幅外可点击对焦的问题
+            if (!uiState.isSettingsPanelExpanded && !uiState.isFilterSelectorVisible &&
+                !uiState.isZoomSliderVisible && !uiState.isModeMenuVisible &&
+                !(uiState.mode == CameraMode.PRO && uiState.isProPanelVisible)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                // 等待按下事件
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                val downOffset = down.position
+                                val normalizedX = downOffset.x / size.width
+                                val normalizedY = downOffset.y / size.height
+                                // 按下时立即显示对焦框
+                                viewModel.updateFocusPointPreview(normalizedX, normalizedY)
 
-                            var lastOffset = downOffset
-                            // 追踪拖动过程
-                            do {
-                                val event = awaitPointerEvent()
-                                val change = event.changes.firstOrNull()
-                                if (change != null && change.pressed) {
-                                    // 手指移动时更新对焦框位置
-                                    lastOffset = change.position
-                                    val dragNormalizedX = lastOffset.x / size.width
-                                    val dragNormalizedY = lastOffset.y / size.height
-                                    viewModel.updateFocusPointPreview(dragNormalizedX, dragNormalizedY)
-                                }
-                            } while (event.changes.any { it.pressed })
+                                var lastOffset = downOffset
+                                // 追踪拖动过程
+                                do {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull()
+                                    if (change != null && change.pressed) {
+                                        // 手指移动时更新对焦框位置
+                                        lastOffset = change.position
+                                        val dragNormalizedX = lastOffset.x / size.width
+                                        val dragNormalizedY = lastOffset.y / size.height
+                                        viewModel.updateFocusPointPreview(dragNormalizedX, dragNormalizedY)
+                                    }
+                                } while (event.changes.any { it.pressed })
 
-                            // 手指抬起时触发实际对焦
-                            val releaseNormalizedX = lastOffset.x / size.width
-                            val releaseNormalizedY = lastOffset.y / size.height
-                            Log.d(TAG, "触摸对焦: 抬起位置=($releaseNormalizedX, $releaseNormalizedY)")
-                            viewModel.onPreviewTouchFocus(releaseNormalizedX, releaseNormalizedY)
+                                // 手指抬起时触发实际对焦
+                                val releaseNormalizedX = lastOffset.x / size.width
+                                val releaseNormalizedY = lastOffset.y / size.height
+                                Log.d(TAG, "触摸对焦: 抬起位置=($releaseNormalizedX, $releaseNormalizedY)")
+                                viewModel.onPreviewTouchFocus(releaseNormalizedX, releaseNormalizedY)
+                            }
                         }
-                    }
-            )
+                )
+            }
         }
 
-        // 2.4 对焦指示器覆盖层 - 显示黄色对焦框 + 亮度调节滑块
+        // 2. 对焦指示器覆盖层 - 显示黄色对焦框 + 亮度调节滑块
         FocusIndicator(
             focusPoint = uiState.focusPoint,
             isFocusing = uiState.isFocusing,
@@ -329,10 +426,10 @@ private fun CameraContent(
             modifier = Modifier.fillMaxSize()
         )
 
-        // 2.5 透明点击层 - 点击预览区域空白处关闭所有弹窗
+        // 2.1 透明点击层 - 点击预览区域空白处关闭所有弹窗
         // 仅当有弹窗展开时才显示此层
         if (uiState.isSettingsPanelExpanded || uiState.isFilterSelectorVisible ||
-            uiState.isZoomSliderVisible ||                                       // 变焦滑块展开时
+            uiState.isZoomSliderVisible || uiState.isModeMenuVisible ||              // 变焦滑块/模式菜单展开时
             (uiState.mode == CameraMode.PRO && uiState.isProPanelVisible) ||
             (uiState.mode == CameraMode.PORTRAIT && uiState.isPortraitOverlayVisible)) { // 人像模式覆盖层可见时
             Box(
@@ -346,20 +443,24 @@ private fun CameraContent(
             )
         }
 
-        NewCameraTopBar(
+        // 3. 精简版 TopBar - 整合功能到模式菜单，根据模式显示不同功能
+        CompactCameraTopBar(
+            cameraMode = uiState.mode,                                    // 新增：传递当前相机模式
             flashMode = uiState.advancedSettings.flashMode,
             hdrMode = uiState.advancedSettings.hdrMode,
             timerMode = uiState.timerMode,
             aspectRatio = uiState.advancedSettings.aspectRatio,
             isFilterActive = uiState.filterType != FilterType.NONE,       // 滤镜非NONE时激活
+            isModeMenuVisible = uiState.isModeMenuVisible,
             onFlashClick = { viewModel.toggleFlashMode() },
+            onModeMenuClick = { viewModel.toggleModeMenu() },
             onHdrClick = { viewModel.setHdrMode(if (uiState.advancedSettings.hdrMode == HdrMode.ON) HdrMode.OFF else HdrMode.ON) },
             onTimerClick = { viewModel.toggleTimerMode() },
-            onFilterClick = { viewModel.toggleFilterSelector() },       // 滤镜按钮点击
             onAspectRatioClick = {
                 // 使用AspectRatio.next()循环切换所有画幅比例(4:3→16:9→全屏→1:1→3:2→4:3)
                 viewModel.setAspectRatio(AspectRatio.next(uiState.advancedSettings.aspectRatio))
             },
+            onFilterClick = { viewModel.toggleFilterSelector() },       // 滤镜按钮点击
             onSettingsClick = onNavigateToSettings,
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -404,26 +505,16 @@ private fun CameraContent(
                     .padding(top = dimens.topBarHeight + dimens.spacing.xl) // 响应式：TopBar高度+间距
             )
 
-            // 人像模式美颜滑块（预览区左侧）- 仅在覆盖层可见时显示
-            if (uiState.isPortraitOverlayVisible) {
-                BeautySlider(
-                    currentLevel = uiState.beautyLevel,
-                    onLevelChanged = viewModel::setBeautyLevel,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = dimens.spacing.lg)                   // 响应式间距
-                        .width(dimens.zoomSliderHeight)                       // 响应式宽度（与变焦滑块高度一致）
-                )
-
-                // 人像模式虚化等级选择器（预览区右侧）
-                PortraitBlurLevelSelector(
-                    currentLevel = uiState.portraitBlurLevel,
-                    onLevelSelected = viewModel::setPortraitBlurLevel,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = dimens.spacing.lg)                     // 响应式间距
-                )
-            }
+            // 人像模式紧凑控制条（底部模式选择器上方）- 简洁设计，不遮挡预览
+            CompactPortraitControls(
+                beautyLevel = uiState.beautyLevel,
+                blurLevel = uiState.portraitBlurLevel,
+                onBeautyToggle = viewModel::toggleBeautyLevel,
+                onBlurToggle = viewModel::togglePortraitBlurLevel,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = dimens.modeSelectorHeight + dimens.bottomBarHeight + dimens.spacing.xl)
+            )
 
             // 人脸追踪状态指示器（预览区右上角）
             FaceTrackingStateIndicator(
@@ -625,6 +716,19 @@ private fun CameraContent(
                     onModeSelected = { uiMode ->
                         viewModel.setDocumentScanMode(uiMode.toDataMode())// 转换并设置
                         viewModel.showDocumentScanModeSelector(false)     // 选择后关闭面板
+                    },
+                    onAdvancedScanClick = {
+                        // 启动 ML Kit 高级文档扫描
+                        val activity = context as? Activity
+                        if (activity != null) {
+                            viewModel.showDocumentScanModeSelector(false) // 关闭选择器面板
+                            viewModel.mlKitDocumentScanner.startScan(
+                                activity = activity,
+                                launcher = mlKitScannerLauncher
+                            )
+                        } else {
+                            Log.w(TAG, "无法获取Activity实例")
+                        }
                     }
                 )
             }
@@ -795,4 +899,130 @@ fun CameraPreview(
         factory = { previewView },
         modifier = modifier
     )
+}
+
+// ==================== ML Kit 扫描结果保存辅助函数 ====================
+
+/**
+ * 保存扫描的图片到相册
+ *
+ * 将 ML Kit 扫描结果的图片 Uri 复制到系统相册
+ *
+ * @param context 上下文
+ * @param sourceUri ML Kit 返回的图片 Uri
+ * @param pageIndex 页码（用于文件命名）
+ * @return 是否保存成功
+ */
+private suspend fun saveScannedImageToGallery(
+    context: android.content.Context,
+    sourceUri: Uri,
+    pageIndex: Int
+): Boolean = withContext(Dispatchers.IO) {
+    try {
+        // 生成文件名
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "SCAN_${timestamp}_P${pageIndex}.jpg"
+
+        // 使用 MediaStore API 保存到相册
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis() / 1000)
+            put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/FilterCamera/Scans")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+        }
+
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            ?: return@withContext false
+
+        // 复制图片数据
+        resolver.openInputStream(sourceUri)?.use { input ->
+            resolver.openOutputStream(uri)?.use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        // Android Q+ 标记完成
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            contentValues.clear()
+            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+            resolver.update(uri, contentValues, null, null)
+        }
+
+        Log.d(TAG, "saveScannedImageToGallery: 图片保存成功 $fileName")
+        true
+    } catch (e: Exception) {
+        Log.e(TAG, "saveScannedImageToGallery: 保存失败", e)
+        false
+    }
+}
+
+/**
+ * 保存扫描的 PDF 到文档目录
+ *
+ * 将 ML Kit 扫描结果的 PDF Uri 复制到 Documents 目录
+ *
+ * @param context 上下文
+ * @param sourceUri ML Kit 返回的 PDF Uri
+ * @return 是否保存成功
+ */
+private suspend fun saveScannedPdfToDocuments(
+    context: android.content.Context,
+    sourceUri: Uri
+): Boolean = withContext(Dispatchers.IO) {
+    try {
+        // 生成文件名
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "SCAN_${timestamp}.pdf"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android Q+ 使用 MediaStore
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+                put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/FilterCamera/Scans")
+                put(MediaStore.Downloads.IS_PENDING, 1)
+            }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                ?: return@withContext false
+
+            // 复制 PDF 数据
+            resolver.openInputStream(sourceUri)?.use { input ->
+                resolver.openOutputStream(uri)?.use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            // 标记完成
+            contentValues.clear()
+            contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+            resolver.update(uri, contentValues, null, null)
+
+            Log.d(TAG, "saveScannedPdfToDocuments: PDF 保存成功 (MediaStore) $fileName")
+        } else {
+            // Android Q 以下使用传统文件操作
+            val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+            val scanDir = File(documentsDir, "FilterCamera/Scans")
+            if (!scanDir.exists()) scanDir.mkdirs()
+
+            val outputFile = File(scanDir, fileName)
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                FileOutputStream(outputFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            Log.d(TAG, "saveScannedPdfToDocuments: PDF 保存成功 (File) ${outputFile.absolutePath}")
+        }
+        true
+    } catch (e: Exception) {
+        Log.e(TAG, "saveScannedPdfToDocuments: 保存失败", e)
+        false
+    }
 }

@@ -8,9 +8,9 @@
   @since 2.0.0
 -->
 <resources>
-    <!-- Material 3 主题颜色 -->
-    <color name="primary">#FF1976D2</color>
-    <color name="primary_dark">#FF0D47A1</color>
+    <!-- Material 3 主题颜色 - 与 CameraTheme.Colors 统一为金色系 -->
+    <color name="primary">#FFFFD700</color>
+    <color name="primary_dark">#FFD8AE31</color>
     <color name="on_primary">#FFFFFFFF</color>
 
     <color name="secondary">#FF00BCD4</color>

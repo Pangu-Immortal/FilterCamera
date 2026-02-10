@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -78,6 +79,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalDensity
 import com.qihao.filtercamera.domain.model.CameraMode
 import com.qihao.filtercamera.domain.model.FilterGroup
 import com.qihao.filtercamera.domain.model.FilterType
@@ -892,12 +894,19 @@ fun FocusIndicator(
 
             // 曝光调节滑块（太阳图标 + 垂直滑块）
             // 显示在聚焦框右侧，上下滑动调节亮度
+            // 优化：增加高度到220dp，有效拖动区域约124dp，添加边缘阻尼算法
             if (showExposureSlider && onExposureChange != null) {
-                val sliderHeight = 120.dp
-                val sliderWidth = 36.dp
+                val sliderHeight = 220.dp                                // 优化：增加高度，提升操控精度
+                val sliderWidth = 44.dp                                  // 优化：略微增加宽度，触摸更舒适
                 val sliderX = centerX + halfSize + dimens.spacing.md    // 聚焦框右侧
                 val sliderY = centerY - sliderHeight / 2                 // 垂直居中
-                val sliderTrackHeight = 60f                              // 滑块轨道高度（dp）
+
+                // 计算轨道实际高度用于指示器定位（与pointerInput中一致）
+                val iconAreaDp = 48.dp                                   // 顶部和底部图标区域
+                val paddingDp = 12.dp                                    // 垂直padding
+                val trackPaddingDp = 6.dp                                // 轨道内部padding
+                // 轨道高度 = 总高度 - 图标区域*2 - 垂直padding*2 - 轨道内部padding*2
+                val trackHeightDp = sliderHeight - iconAreaDp * 2 - paddingDp * 2 - trackPaddingDp * 2
 
                 Column(
                     modifier = Modifier
@@ -905,33 +914,55 @@ fun FocusIndicator(
                         .width(sliderWidth)
                         .height(sliderHeight)
                         .background(
-                            color = Color.Black.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(18.dp)
+                            color = Color.Black.copy(alpha = 0.5f),      // 增强背景可见度
+                            shape = RoundedCornerShape(22.dp)            // 优化：圆角与高度匹配
                         )
-                        .pointerInput(Unit) {                            // 添加拖动手势
+                        .pointerInput(Unit) {                            // 手势处理：带边缘阻尼
+                            // 可拖动区域高度（减去顶部和底部图标+padding）
+                            val iconAreaPx = 48.dp.toPx()                // 顶部和底部图标区域
+                            val trackHeightPx = size.height - iconAreaPx * 2
+
                             awaitEachGesture {
                                 val down = awaitFirstDown(requireUnconsumed = false)
-                                var lastY = down.position.y
-                                // 初始位置转换为曝光值
-                                val initialExposure = 1f - (lastY / (sliderTrackHeight * density)) * 2f
-                                onExposureChange(initialExposure.coerceIn(-1f, 1f))
+                                down.consume()                           // 消费事件，防止触发对焦
 
+                                // 计算曝光值：带边缘阻尼的非线性映射
+                                // 中间区域（-0.7~0.7）线性响应，边缘区域（±0.7~±1.0）阻尼减速
+                                fun calculateExposure(y: Float): Float {
+                                    val relativeY = (y - iconAreaPx).coerceIn(0f, trackHeightPx)
+                                    val normalizedY = relativeY / trackHeightPx  // 0~1
+                                    val linearValue = 1f - normalizedY * 2f      // 线性映射：1~-1
+
+                                    // 边缘阻尼：使用平方根函数在边缘区域降低灵敏度
+                                    val dampedValue = when {
+                                        linearValue > 0.7f -> {          // 上边缘阻尼
+                                            val excess = linearValue - 0.7f
+                                            0.7f + kotlin.math.sqrt(excess / 0.3f) * 0.3f
+                                        }
+                                        linearValue < -0.7f -> {         // 下边缘阻尼
+                                            val excess = -0.7f - linearValue
+                                            -0.7f - kotlin.math.sqrt(excess / 0.3f) * 0.3f
+                                        }
+                                        else -> linearValue              // 中间区域保持线性
+                                    }
+                                    return dampedValue.coerceIn(-1f, 1f)
+                                }
+
+                                // 初始化：根据点击位置计算曝光值
+                                onExposureChange(calculateExposure(down.position.y))
+
+                                // 拖动处理 - 跟随手指位置，带阻尼效果
                                 do {
                                     val event = awaitPointerEvent()
                                     val change = event.changes.firstOrNull()
                                     if (change != null && change.pressed) {
-                                        val currentY = change.position.y
-                                        // 计算拖动距离转曝光变化（灵敏度调低，除以2）
-                                        val deltaExposure = -(currentY - lastY) / (sliderTrackHeight * density * 2)
-                                        val newExposure = (exposureCompensation + deltaExposure).coerceIn(-1f, 1f)
-                                        onExposureChange(newExposure)
-                                        lastY = currentY
-                                        change.consume()
+                                        change.consume()                 // 消费事件
+                                        onExposureChange(calculateExposure(change.position.y))
                                     }
                                 } while (event.changes.any { it.pressed })
                             }
                         }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -939,7 +970,7 @@ fun FocusIndicator(
                     Text(
                         text = "☀",
                         color = CameraTheme.FocusIndicator.corner,
-                        fontSize = 14.sp
+                        fontSize = 16.sp
                     )
 
                     // 垂直滑块指示器
@@ -947,31 +978,57 @@ fun FocusIndicator(
                         modifier = Modifier
                             .width(4.dp)
                             .weight(1f)
-                            .padding(vertical = 4.dp)
+                            .padding(vertical = 6.dp)
                             .background(
                                 color = Color.White.copy(alpha = 0.3f),
                                 shape = RoundedCornerShape(2.dp)
                             )
                     ) {
                         // 滑块位置指示器（基于曝光值）
-                        val indicatorPosition = (1f - (exposureCompensation + 1f) / 2f)  // 归一化到0-1
+                        // 优化：动态计算轨道高度，指示器位置准确跟随曝光值
+                        // 反向阻尼映射：将曝光值转换回位置
+                        val indicatorPosition = run {
+                            val exp = exposureCompensation
+                            // 反向阻尼映射
+                            val linearValue = when {
+                                exp > 0.7f -> {
+                                    val dampedExcess = exp - 0.7f
+                                    0.7f + (dampedExcess / 0.3f).let { it * it } * 0.3f
+                                }
+                                exp < -0.7f -> {
+                                    val dampedExcess = -0.7f - exp
+                                    -0.7f - (dampedExcess / 0.3f).let { it * it } * 0.3f
+                                }
+                                else -> exp
+                            }
+                            (1f - (linearValue + 1f) / 2f).coerceIn(0f, 1f)  // 归一化到0~1
+                        }
                         Box(
                             modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .offset(y = (indicatorPosition * 60).dp)
-                                .size(8.dp)
-                                .background(
-                                    color = CameraTheme.FocusIndicator.corner,
-                                    shape = CircleShape
-                                )
-                        )
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = with(LocalDensity.current) {
+                                        // 动态计算：轨道高度 * 位置百分比
+                                        (trackHeightDp.toPx() * indicatorPosition).toDp()
+                                    })
+                                    .size(12.dp)                         // 优化：稍微增大指示器
+                                    .background(
+                                        color = CameraTheme.FocusIndicator.corner,
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
                     }
 
                     // 月亮图标（底部 - 暗）
                     Text(
                         text = "🌙",
-                        color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 12.sp
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
                     )
                 }
             }
