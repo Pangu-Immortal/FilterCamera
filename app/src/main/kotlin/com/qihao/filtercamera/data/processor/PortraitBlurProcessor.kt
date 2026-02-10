@@ -42,6 +42,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -167,6 +168,10 @@ class PortraitBlurProcessor @Inject constructor(
                 isInitialized = true
                 _processingProgress.value = "初始化完成" to 1f
                 Log.d(TAG, "initialize: 人像虚化处理器初始化完成")
+
+                // 短暂延迟后清除进度，避免UI一直显示"初始化完成"
+                kotlinx.coroutines.delay(500)
+                _processingProgress.value = null
             }
         }
     }
@@ -191,23 +196,48 @@ class PortraitBlurProcessor @Inject constructor(
         totalProcessCount++
         Log.d(TAG, "processPortraitBlur: 开始处理 #$totalProcessCount config=$config")
 
-        processingMutex.withLock {
-            try {
-                // 确保已初始化
-                if (!isInitialized) {
-                    Log.d(TAG, "processPortraitBlur: 自动初始化")
-                    initialize().getOrThrow()
-                }
+        // 整体处理超时保护（包括初始化和分割），避免ML Kit在模拟器上无限卡住
+        val result = withTimeoutOrNull(15000L) {  // 15秒总超时
+            processingMutex.withLock {
+                try {
+                    // 确保已初始化（带超时保护）
+                    if (!isInitialized) {
+                        Log.d(TAG, "processPortraitBlur: 自动初始化")
+                        val initResult = withTimeoutOrNull(5000L) {  // 初始化5秒超时
+                            initialize()
+                        }
+                        if (initResult == null || initResult.isFailure) {
+                            Log.w(TAG, "processPortraitBlur: 初始化超时或失败")
+                            return@withLock null
+                        }
+                    }
 
-                val segmenterInstance = segmenter ?: throw IllegalStateException("Segmenter 未初始化")
+                    val segmenterInstance = segmenter ?: throw IllegalStateException("Segmenter 未初始化")
 
-                // 步骤1：分割人物
+                // 步骤1：分割人物（带超时保护，避免ML Kit在模拟器上卡住）
                 _processingProgress.value = "分割人物..." to 0.2f
                 Log.d(TAG, "processPortraitBlur: 开始人物分割")
                 val segmentStartTime = System.currentTimeMillis()
 
                 val inputImage = InputImage.fromBitmap(sourceBitmap, 0)
-                val segmentationMask = segmentImage(segmenterInstance, inputImage)
+
+                // 使用超时机制，防止ML Kit在模拟器上无限等待
+                val segmentationMask = withTimeoutOrNull(10000L) {  // 10秒超时
+                    segmentImage(segmenterInstance, inputImage)
+                }
+
+                // 如果超时或分割失败，返回原图
+                if (segmentationMask == null) {
+                    Log.w(TAG, "processPortraitBlur: 人物分割超时或失败，返回原图")
+                    _processingProgress.value = null
+                    return@withLock PortraitBlurResult(
+                        bitmap = sourceBitmap,
+                        processingTimeMs = System.currentTimeMillis() - startTime,
+                        success = true,
+                        hasPerson = false,
+                        errorMessage = "人物分割超时"
+                    )
+                }
 
                 val segmentTime = System.currentTimeMillis() - segmentStartTime
                 Log.d(TAG, "processPortraitBlur: 人物分割完成 耗时=${segmentTime}ms")
@@ -289,7 +319,24 @@ class PortraitBlurProcessor @Inject constructor(
                     hasPerson = false
                 )
             }
+            }
         }
+
+        // 如果整体处理超时，返回原图
+        if (result == null) {
+            Log.w(TAG, "processPortraitBlur: 整体处理超时，返回原图")
+            _processingProgress.value = null
+            errorCount++
+            return@withContext PortraitBlurResult(
+                bitmap = sourceBitmap,
+                processingTimeMs = System.currentTimeMillis() - startTime,
+                success = true,
+                hasPerson = false,
+                errorMessage = "处理超时"
+            )
+        }
+
+        result
     }
 
     /**

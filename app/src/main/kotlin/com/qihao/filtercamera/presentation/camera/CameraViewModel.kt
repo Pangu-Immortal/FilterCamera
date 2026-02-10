@@ -24,7 +24,9 @@ import androidx.lifecycle.viewModelScope
 import com.qihao.filtercamera.data.processor.DocumentScanProcessor
 import com.qihao.filtercamera.data.processor.FaceDetectionProcessor
 import com.qihao.filtercamera.data.processor.FaceTrackingFocusCallback
+import com.qihao.filtercamera.data.processor.MLKitDocumentScanner
 import com.qihao.filtercamera.data.processor.PortraitBlurProcessor
+import com.qihao.filtercamera.data.processor.ScanState
 import com.qihao.filtercamera.data.processor.TimelapseEngine
 import com.qihao.filtercamera.data.processor.TimelapseState
 import androidx.compose.ui.geometry.Offset
@@ -75,6 +77,8 @@ private const val TAG = "CameraViewModel"  // 日志标签
  * @param useCase 统一相机用例 - 处理所有相机操作
  * @param faceDetectionProcessor 人脸检测处理器（人像模式）
  * @param documentScanProcessor 文档扫描处理器（文档模式）
+ * @param mlKitDocumentScanner ML Kit文档扫描器（高级文档扫描）
+ * @param popupStateHolder 弹窗状态管理器（统一管理所有弹窗互斥）
  */
 @HiltViewModel
 class CameraViewModel @Inject constructor(
@@ -82,7 +86,9 @@ class CameraViewModel @Inject constructor(
     private val faceDetectionProcessor: FaceDetectionProcessor,
     private val documentScanProcessor: DocumentScanProcessor,
     private val timelapseEngine: TimelapseEngine,                     // 延时摄影引擎
-    private val portraitBlurProcessor: PortraitBlurProcessor          // 人像虚化处理器
+    private val portraitBlurProcessor: PortraitBlurProcessor,         // 人像虚化处理器
+    val mlKitDocumentScanner: MLKitDocumentScanner,                   // ML Kit文档扫描器
+    val popupStateHolder: PopupStateHolder                            // 弹窗状态管理器
 ) : ViewModel() {
 
     // ==================== 核心UI状态 ====================
@@ -95,8 +101,9 @@ class CameraViewModel @Inject constructor(
     private val _events = MutableSharedFlow<CameraEvent>()
     val events: SharedFlow<CameraEvent> = _events.asSharedFlow()
 
-    // 滤镜帧流（用于实时预览）
-    val filteredFrame: StateFlow<Bitmap?> = MutableStateFlow<Bitmap?>(null)
+    // 滤镜帧流（用于实时预览）- 修复：使用正确的私有MutableStateFlow模式
+    private val _filteredFrame = MutableStateFlow<Bitmap?>(null)
+    val filteredFrame: StateFlow<Bitmap?> = _filteredFrame.asStateFlow()
 
     // 直方图数据流（用于专业模式实时显示）
     private val _histogramData = MutableStateFlow(HistogramData())
@@ -267,16 +274,26 @@ class CameraViewModel @Inject constructor(
      *
      * 当人像虚化处理器正在处理时，更新UI显示进度
      * 用于拍照时显示虚化处理状态
+     * 注意：只在实际处理图片时显示进度（不包含初始化阶段）
      */
     private fun observePortraitBlurProgress() = viewModelScope.launch {
         portraitBlurProcessor.processingProgress.collect { progress ->
-            val isProcessing = progress != null
             val (stageName, progressValue) = progress ?: ("" to 0f)
-            Log.d(TAG, "observePortraitBlurProgress: isProcessing=$isProcessing, stage=$stageName, progress=$progressValue")
+
+            // 修复：只在实际虚化处理阶段（非初始化）才显示进度
+            // 初始化阶段的关键词：正在初始化、ML Kit、初始化完成
+            val isInitializationPhase = stageName.contains("初始化") ||
+                                        stageName.contains("ML Kit") ||
+                                        stageName.isEmpty()
+
+            // 只有在实际处理阶段（分割、模糊、合成）才显示处理中状态
+            val isProcessing = progress != null && !isInitializationPhase
+
+            Log.d(TAG, "observePortraitBlurProgress: isProcessing=$isProcessing, stage=$stageName, progress=$progressValue (init=$isInitializationPhase)")
             _uiState.update { state ->
                 state.copy(
                     isPortraitBlurProcessing = isProcessing,
-                    portraitBlurProgress = progressValue
+                    portraitBlurProgress = if (isProcessing) progressValue else 0f
                 )
             }
         }
@@ -327,7 +344,7 @@ class CameraViewModel @Inject constructor(
      */
     private fun observeFilteredFrame() = viewModelScope.launch {
         useCase.filteredFrame().collect { bitmap ->
-            (filteredFrame as MutableStateFlow).value = bitmap
+            _filteredFrame.value = bitmap  // 修复：使用私有_filteredFrame
 
             // 如果是人像模式，对预览帧进行人脸检测
             if (_uiState.value.mode == CameraMode.PORTRAIT && bitmap != null) {
@@ -350,28 +367,37 @@ class CameraViewModel @Inject constructor(
      */
     private fun observeRawPreviewFrame() = viewModelScope.launch {
         useCase.rawPreviewFrame().collect { bitmap ->
-            if (bitmap != null) {
-                // 更新当前预览帧
-                currentPreviewFrame = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false)
+            // 修复：添加isRecycled检查和异常处理
+            if (bitmap != null && !bitmap.isRecycled) {
+                try {
+                    // 修复内存泄漏：回收旧预览帧
+                    currentPreviewFrame?.let { oldFrame ->
+                        if (!oldFrame.isRecycled) oldFrame.recycle()
+                    }
+                    // 更新当前预览帧
+                    currentPreviewFrame = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false)
 
-                // 更新滤镜选择器状态管理器
-                filterSelectorState.updatePreviewFrame(bitmap)
+                    // 更新滤镜选择器状态管理器
+                    filterSelectorState.updatePreviewFrame(bitmap)
 
-                // 如果直方图可见，计算直方图数据（使用采样提高性能）
-                if (_uiState.value.isHistogramVisible) {
-                    val histData = HistogramCalculator.calculateSampled(bitmap, 4)
-                    _histogramData.value = histData
-                }
+                    // 如果直方图可见，计算直方图数据（使用采样提高性能）
+                    if (_uiState.value.isHistogramVisible) {
+                        val histData = HistogramCalculator.calculateSampled(bitmap, 4)
+                        _histogramData.value = histData
+                    }
 
-                // 如果是人像模式，对原始帧进行人脸检测
-                if (_uiState.value.mode == CameraMode.PORTRAIT) {
-                    val isFront = _uiState.value.lens == CameraLens.FRONT
-                    faceDetectionProcessor.processBitmap(bitmap, 0, isFront)
-                }
+                    // 如果是人像模式，对原始帧进行人脸检测
+                    if (_uiState.value.mode == CameraMode.PORTRAIT) {
+                        val isFront = _uiState.value.lens == CameraLens.FRONT
+                        faceDetectionProcessor.processBitmap(bitmap, 0, isFront)
+                    }
 
-                // 如果是文档模式，对原始帧进行边缘检测
-                if (_uiState.value.mode == CameraMode.DOCUMENT) {
-                    documentScanProcessor.processBitmap(bitmap)
+                    // 如果是文档模式，对原始帧进行边缘检测
+                    if (_uiState.value.mode == CameraMode.DOCUMENT) {
+                        documentScanProcessor.processBitmap(bitmap)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "observeRawPreviewFrame: 处理预览帧异常", e)
                 }
             }
         }
@@ -425,8 +451,21 @@ class CameraViewModel @Inject constructor(
      * 同时更新状态管理器
      */
     fun updatePreviewFrame(bitmap: Bitmap) {
-        currentPreviewFrame = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false)
-        filterSelectorState.updatePreviewFrame(bitmap)
+        // 修复：添加isRecycled检查和异常处理
+        if (bitmap.isRecycled) {
+            Log.w(TAG, "updatePreviewFrame: Bitmap已回收，跳过")
+            return
+        }
+        try {
+            // 修复内存泄漏：回收旧预览帧
+            currentPreviewFrame?.let { oldFrame ->
+                if (!oldFrame.isRecycled) oldFrame.recycle()
+            }
+            currentPreviewFrame = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false)
+            filterSelectorState.updatePreviewFrame(bitmap)
+        } catch (e: Exception) {
+            Log.e(TAG, "updatePreviewFrame: 复制Bitmap异常", e)
+        }
     }
 
     // ==================== 相机绑定 ====================
@@ -546,10 +585,16 @@ class CameraViewModel @Inject constructor(
                 .onSuccess { uri ->
                     Log.d(TAG, "executePhoto: 拍照成功 uri=$uri")
                     _events.emit(CameraEvent.PhotoCaptured(uri.toString()))
-                    // 更新相册缩略图（使用当前预览帧作为临时缩略图）
+                    // 更新相册缩略图（使用当前预览帧作为临时缩略图）- 修复：添加isRecycled检查
                     currentPreviewFrame?.let { frame ->
-                        val thumbnail = Bitmap.createScaledBitmap(frame, 100, 100, true)
-                        _galleryThumbnail.value = thumbnail
+                        if (!frame.isRecycled) {
+                            try {
+                                val thumbnail = Bitmap.createScaledBitmap(frame, 100, 100, true)
+                                _galleryThumbnail.value = thumbnail
+                            } catch (e: Exception) {
+                                Log.e(TAG, "executePhoto: 创建缩略图失败", e)
+                            }
+                        }
                     }
                 }
                 .onFailure { error ->
@@ -707,7 +752,7 @@ class CameraViewModel @Inject constructor(
                 Log.d(TAG, "selectMode: 已退出夜景模式，重置参数")
             }
             CameraMode.PRO -> {
-                _uiState.update { it.copy(isProPanelVisible = false) }
+                proModeState.hidePanel()  // 退出PRO模式时隐藏面板
             }
             CameraMode.TIMELAPSE -> {
                 // 退出延时摄影模式：取消正在进行的延时摄影
@@ -754,8 +799,8 @@ class CameraViewModel @Inject constructor(
                 Log.d(TAG, "selectMode: 启用夜景模式优化")
             }
             CameraMode.PRO -> {
-                _uiState.update { it.copy(isProPanelVisible = false) }  // PRO模式默认收起面板
-                Log.d(TAG, "selectMode: 进入专业模式（面板默认收起）")
+                proModeState.showPanel()  // PRO模式默认显示面板，用户可立即调节参数
+                Log.d(TAG, "selectMode: 进入专业模式（显示控制面板）")
             }
             CameraMode.TIMELAPSE -> {
                 // 延时摄影模式：准备延时摄影引擎
@@ -971,18 +1016,34 @@ class CameraViewModel @Inject constructor(
 
     /**
      * 切换变焦滑块可见性
-     * 展开时关闭其他弹窗（设置面板、滤镜选择器、PRO面板）
+     * 使用PopupStateHolder实现互斥
      */
     fun toggleZoomSlider() {
-        val isVisible = !_uiState.value.isZoomSliderVisible
-        Log.d(TAG, "toggleZoomSlider: 切换变焦滑块 isVisible=$isVisible")
-        _uiState.update {
-            it.copy(
-                isZoomSliderVisible = isVisible,
-                isSettingsPanelExpanded = if (isVisible) false else it.isSettingsPanelExpanded,
-                isFilterSelectorVisible = if (isVisible) false else it.isFilterSelectorVisible,
-                isProPanelVisible = if (isVisible) false else it.isProPanelVisible
-            )
+        Log.d(TAG, "toggleZoomSlider: 切换变焦滑块")
+        popupStateHolder.toggleZoomSlider()
+        // 同步更新CameraState（保持向后兼容）
+        syncPopupStateToCameraState()
+    }
+
+    /**
+     * 切换模式菜单可见性
+     * 使用PopupStateHolder实现互斥
+     * 模式菜单整合了HDR、定时器、画幅比例、滤镜等功能入口
+     */
+    fun toggleModeMenu() {
+        Log.d(TAG, "toggleModeMenu: 切换模式菜单")
+        popupStateHolder.toggleModeMenu()
+        syncPopupStateToCameraState()
+    }
+
+    /**
+     * 隐藏模式菜单
+     */
+    fun hideModeMenu() {
+        Log.d(TAG, "hideModeMenu: 隐藏模式菜单")
+        if (popupStateHolder.isModeMenuVisible) {
+            popupStateHolder.hide()
+            syncPopupStateToCameraState()
         }
     }
 
@@ -991,7 +1052,10 @@ class CameraViewModel @Inject constructor(
      */
     fun hideZoomSlider() {
         Log.d(TAG, "hideZoomSlider: 隐藏变焦滑块")
-        _uiState.update { it.copy(isZoomSliderVisible = false) }
+        if (popupStateHolder.isZoomSliderVisible) {
+            popupStateHolder.hide()
+            syncPopupStateToCameraState()
+        }
     }
 
     // ==================== 滤镜选择（委托给FilterSelectorStateHolder） ====================
@@ -1034,23 +1098,30 @@ class CameraViewModel @Inject constructor(
 
     /**
      * 切换滤镜选择器可见性
-     * 展开时关闭设置面板
+     * 使用PopupStateHolder实现互斥
      */
     fun toggleFilterSelector() {
-        Log.d(TAG, "toggleFilterSelector: 委托给状态管理器")
-        filterSelectorState.togglePanel()
-        // 展开滤镜时关闭设置面板
-        if (filterSelectorState.isPanelVisible) {
-            _uiState.update { it.copy(isSettingsPanelExpanded = false) }
+        Log.d(TAG, "toggleFilterSelector: 切换滤镜选择器")
+        popupStateHolder.toggleFilterSelector()
+        // 同步更新状态管理器和CameraState
+        if (popupStateHolder.isFilterSelectorVisible) {
+            filterSelectorState.showPanel()
+        } else {
+            filterSelectorState.hidePanel()
         }
+        syncPopupStateToCameraState()
     }
 
     /**
      * 隐藏滤镜选择器
      */
     fun hideFilterSelector() {
-        Log.d(TAG, "hideFilterSelector: 委托给状态管理器")
-        filterSelectorState.hidePanel()
+        Log.d(TAG, "hideFilterSelector: 隐藏滤镜选择器")
+        if (popupStateHolder.isFilterSelectorVisible) {
+            popupStateHolder.hide()
+            filterSelectorState.hidePanel()
+            syncPopupStateToCameraState()
+        }
     }
 
     // ==================== 美颜设置 ====================
@@ -1064,21 +1135,30 @@ class CameraViewModel @Inject constructor(
         useCase.setBeauty(level)
     }
 
+    /**
+     * 循环切换美颜等级
+     *
+     * 切换顺序：OFF -> LEVEL_1 -> LEVEL_2 -> ... -> LEVEL_10 -> OFF
+     */
+    fun toggleBeautyLevel() {
+        val currentLevel = _uiState.value.beautyLevel
+        val allLevels = BeautyLevel.entries.toList()                         // 获取所有等级
+        val currentIndex = allLevels.indexOf(currentLevel)
+        val nextLevel = allLevels[(currentIndex + 1) % allLevels.size]
+        Log.d(TAG, "toggleBeautyLevel: ${currentLevel.displayName} -> ${nextLevel.displayName}")
+        setBeautyLevel(nextLevel)
+    }
+
     // ==================== 高级设置（HDR/微距/画幅/光圈/变焦） ====================
 
     /**
      * 切换设置面板展开状态
-     * 展开时关闭滤镜选择器
+     * 使用PopupStateHolder实现互斥
      */
     fun toggleSettingsPanel() {
-        val isExpanded = !_uiState.value.isSettingsPanelExpanded
-        Log.d(TAG, "toggleSettingsPanel: isExpanded=$isExpanded")
-        _uiState.update {
-            it.copy(
-                isSettingsPanelExpanded = isExpanded,
-                isFilterSelectorVisible = if (isExpanded) false else it.isFilterSelectorVisible  // 展开设置时关闭滤镜选择器
-            )
-        }
+        Log.d(TAG, "toggleSettingsPanel: 切换设置面板")
+        popupStateHolder.toggleSettingsPanel()
+        syncPopupStateToCameraState()
     }
 
     /**
@@ -1086,28 +1166,47 @@ class CameraViewModel @Inject constructor(
      */
     fun hideSettingsPanel() {
         Log.d(TAG, "hideSettingsPanel: 隐藏设置面板")
-        _uiState.update { it.copy(isSettingsPanelExpanded = false) }
+        if (popupStateHolder.isSettingsPanelExpanded) {
+            popupStateHolder.hide()
+            syncPopupStateToCameraState()
+        }
     }
 
     /**
      * 关闭所有弹窗/面板
+     * 使用PopupStateHolder统一管理
      *
      * 包括：设置面板、滤镜选择器、专业模式面板、变焦滑块
      * 调用场景：点击屏幕空白处、切换模式、点击其他功能按钮
      */
     fun dismissAllPopups() {
         Log.d(TAG, "dismissAllPopups: 关闭所有弹窗")
-        // 通过状态管理器隐藏面板
+        // 使用PopupStateHolder统一隐藏
+        popupStateHolder.hideAll()
+        // 同步其他状态管理器
         filterSelectorState.hidePanel()
         if (_uiState.value.mode != CameraMode.PRO) {
             proModeState.hidePanel()
         }
-        // 直接更新剩余状态
+        // 同步CameraState
+        syncPopupStateToCameraState()
+    }
+
+    /**
+     * 同步PopupStateHolder状态到CameraState
+     * 保持向后兼容性
+     * 注意：isProPanelVisible由proModeState独立管理，通过observeStateHolders同步
+     */
+    private fun syncPopupStateToCameraState() {
         _uiState.update {
             it.copy(
-                isSettingsPanelExpanded = false,
-                isZoomSliderVisible = false,
-                isPortraitOverlayVisible = false                          // 隐藏人像模式覆盖层
+                isFilterSelectorVisible = popupStateHolder.isFilterSelectorVisible,
+                // isProPanelVisible 由 proModeState 通过 observeStateHolders 管理，避免双重来源冲突
+                isZoomSliderVisible = popupStateHolder.isZoomSliderVisible,
+                isSettingsPanelExpanded = popupStateHolder.isSettingsPanelExpanded,
+                isDocumentScanModeSelectorVisible = popupStateHolder.isDocumentScanModeSelectorVisible,
+                isPortraitOverlayVisible = popupStateHolder.isPortraitOverlayVisible,
+                isModeMenuVisible = popupStateHolder.isModeMenuVisible
             )
         }
     }
@@ -1950,6 +2049,38 @@ class CameraViewModel @Inject constructor(
         return newState
     }
 
+    // ==================== ML Kit 文档扫描 ====================
+
+    /**
+     * ML Kit 扫描状态
+     *
+     * 暴露给 UI 层观察扫描进度和结果
+     */
+    val mlKitScanState: StateFlow<ScanState> = mlKitDocumentScanner.scanState
+
+    /**
+     * 处理 ML Kit 扫描结果
+     *
+     * 由 Activity Result 回调时调用
+     *
+     * @param resultCode Activity 结果码
+     * @param data Intent 数据
+     */
+    fun handleMLKitScanResult(resultCode: Int, data: android.content.Intent?) {
+        Log.d(TAG, "handleMLKitScanResult: 处理ML Kit扫描结果 resultCode=$resultCode")
+        mlKitDocumentScanner.handleScanResult(resultCode, data)
+    }
+
+    /**
+     * 重置 ML Kit 扫描状态
+     *
+     * 在下次扫描前调用
+     */
+    fun resetMLKitScanState() {
+        Log.d(TAG, "resetMLKitScanState: 重置ML Kit扫描状态")
+        mlKitDocumentScanner.resetState()
+    }
+
     // ==================== 错误处理 ====================
 
     /**
@@ -1970,7 +2101,8 @@ class CameraViewModel @Inject constructor(
         faceDetectionProcessor.release()
         documentScanProcessor.release()
         portraitBlurProcessor.release()                                   // 释放人像虚化处理器
-        filterSelectorState.release()                                 // 释放滤镜选择器资源
+        mlKitDocumentScanner.release()                                    // 释放ML Kit文档扫描器
+        filterSelectorState.release()                                     // 释放滤镜选择器资源
         Log.d(TAG, "onCleared: 状态管理器摘要 - Pro: ${proModeState.getSettingsSummary()}")
         Log.d(TAG, "onCleared: 状态管理器摘要 - Filter: ${filterSelectorState.getStateSummary()}")
         Log.d(TAG, "onCleared: 人像虚化统计 - ${portraitBlurProcessor.getStatistics()}")

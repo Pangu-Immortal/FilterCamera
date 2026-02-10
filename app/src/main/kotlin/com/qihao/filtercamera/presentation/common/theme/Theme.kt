@@ -76,7 +76,7 @@ private object LightModeColors {
 @Composable
 fun FilterCameraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,  // 相机应用禁用动态颜色，保持品牌一致性
     content: @Composable () -> Unit
 ) {
     // 选择配色方案

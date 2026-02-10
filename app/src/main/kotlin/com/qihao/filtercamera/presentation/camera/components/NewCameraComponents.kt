@@ -80,7 +80,7 @@ fun NewCameraTopBar(
                         FlashMode.AUTO -> Icons.Default.FlashAuto
                         FlashMode.TORCH -> Icons.Default.Highlight
                     },
-                    contentDescription = "Flash",
+                    contentDescription = "闪光灯",
                     tint = if (flashMode == FlashMode.OFF) CameraTheme.Colors.textPrimary else CameraTheme.Colors.primary
                 )
             }
@@ -106,7 +106,7 @@ fun NewCameraTopBar(
             IconButton(onClick = onTimerClick) {
                 Icon(
                     Icons.Default.Timer,
-                    contentDescription = "Timer",
+                    contentDescription = "定时器",
                     tint = if (timerMode != TimerMode.OFF) CameraTheme.Colors.primary else CameraTheme.Colors.textPrimary
                 )
             }
@@ -135,7 +135,7 @@ fun NewCameraTopBar(
             IconButton(onClick = onSettingsClick) {
                 Icon(
                     Icons.Default.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = "设置",
                     tint = CameraTheme.Colors.textPrimary
                 )
             }
@@ -143,6 +143,22 @@ fun NewCameraTopBar(
     }
 }
 
+/**
+ * NewCameraBottomControls - 底部控制区
+ *
+ * 包含相册缩略图、快门按钮、切换镜头按钮
+ * 使用响应式尺寸系统确保多设备适配
+ *
+ * 优化点：
+ * - 增加控件间距，避免误触
+ * - 快门按钮居中对齐
+ * - 相册和切换按钮等宽，保持对称
+ *
+ * @param galleryThumbnail 相册缩略图（可空）
+ * @param onGalleryClick 点击相册回调
+ * @param onShutterClick 点击快门回调
+ * @param onSwitchCameraClick 点击切换镜头回调
+ */
 @Composable
 fun NewCameraBottomControls(
     galleryThumbnail: Bitmap?,
@@ -153,7 +169,7 @@ fun NewCameraBottomControls(
     val dimens = rememberResponsiveDimens()                               // 响应式尺寸系统
 
     // 计算响应式尺寸
-    val gallerySize = dimens.overlayButtonSize + dimens.spacing.lg        // 相册缩略图尺寸
+    val gallerySize = dimens.overlayButtonSize + dimens.spacing.md        // 相册缩略图尺寸（减小以增加间距）
     val shutterOuter = dimens.shutterButtonSize                           // 快门外圈
     val shutterInner = dimens.shutterInnerSize                            // 快门内圈
     val switchButtonSize = dimens.minTouchTarget                          // 切换按钮尺寸
@@ -161,7 +177,10 @@ fun NewCameraBottomControls(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(dimens.bottomBarPadding),                            // 响应式内边距
+            .padding(
+                horizontal = dimens.spacing.xl,                           // 增加水平边距
+                vertical = dimens.spacing.lg                              // 增加垂直边距
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -172,7 +191,7 @@ fun NewCameraBottomControls(
                 .clip(RoundedCornerShape(dimens.radius.small))
                 .border(
                     1.5.dp,
-                    CameraTheme.Colors.textSecondary,
+                    CameraTheme.Colors.textSecondary.copy(alpha = 0.5f),  // 减淡边框
                     RoundedCornerShape(dimens.radius.small)
                 )
                 .background(CameraTheme.Colors.controlBackgroundLight)
@@ -182,14 +201,14 @@ fun NewCameraBottomControls(
             if (galleryThumbnail != null) {
                 androidx.compose.foundation.Image(
                     bitmap = galleryThumbnail.asImageBitmap(),
-                    contentDescription = "Gallery preview",
+                    contentDescription = "相册预览",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }
         }
 
-        // Shutter Button - 快门按钮
+        // Shutter Button - 快门按钮（居中）
         Box(
             modifier = Modifier
                 .size(shutterOuter)
@@ -216,7 +235,7 @@ fun NewCameraBottomControls(
         ) {
             Icon(
                 Icons.Default.Cached,
-                contentDescription = "Switch Camera",
+                contentDescription = "切换摄像头",
                 tint = CameraTheme.Colors.iconActive,
                 modifier = Modifier.size(dimens.iconSizeLarge)
             )
@@ -229,6 +248,11 @@ fun NewCameraBottomControls(
  *
  * 使用LazyRow实现水平滚动的模式选择器，防止小屏设备溢出裁剪
  * 支持响应式尺寸和统一主题颜色
+ *
+ * 优化点：
+ * - 增加与预览区的间距，避免遮挡
+ * - 调整选中指示器位置
+ * - 改善触摸反馈区域
  *
  * @param currentMode 当前选中的模式
  * @param onModeSelected 模式选中回调
@@ -257,10 +281,11 @@ fun CameraModeSelector(
         state = listState,
         modifier = Modifier
             .fillMaxWidth()
-            .height(dimens.modeSelectorHeight + dimens.spacing.md),       // 响应式高度
+            .padding(vertical = dimens.spacing.sm)                        // 垂直间距：与预览区保持距离
+            .height(dimens.modeSelectorHeight + dimens.spacing.sm),       // 响应式高度（减小以避免遮挡）
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
-        contentPadding = PaddingValues(horizontal = dimens.spacing.lg)    // 水平内边距
+        contentPadding = PaddingValues(horizontal = dimens.spacing.xl)    // 增加水平内边距
     ) {
         items(modes) { mode ->
             val isSelected = mode == currentMode
@@ -268,21 +293,21 @@ fun CameraModeSelector(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .padding(dimens.modeItemPadding)                      // 响应式间距
+                    .padding(horizontal = dimens.spacing.md)              // 水平间距：模式项之间
                     .clickable { onModeSelected(mode) }
             ) {
                 Text(
                     text = mode.displayName,
                     color = if (isSelected) CameraTheme.ModeSelector.active else CameraTheme.ModeSelector.inactive,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    letterSpacing = 1.5.sp                                // 减小字间距，更紧凑
                 )
                 if (isSelected) {
-                    Spacer(modifier = Modifier.height(dimens.spacing.sm - 2.dp))
+                    Spacer(modifier = Modifier.height(dimens.spacing.xs))
                     Box(
                         modifier = Modifier
-                            .size(dimens.modeIndicatorHeight + 1.dp)
+                            .size(dimens.modeIndicatorHeight + 2.dp)
                             .background(CameraTheme.ModeSelector.indicator, CircleShape)
                     )
                 }

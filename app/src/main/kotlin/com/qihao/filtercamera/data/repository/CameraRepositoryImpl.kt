@@ -18,6 +18,10 @@ package com.qihao.filtercamera.data.repository
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.util.Log
 import android.util.Size
 import com.qihao.filtercamera.data.processor.BeautyProcessor
@@ -29,7 +33,6 @@ import com.qihao.filtercamera.data.processor.TimelapseConfig
 import com.qihao.filtercamera.data.processor.TimelapseEngine
 import com.qihao.filtercamera.data.processor.TimelapseState
 import com.qihao.filtercamera.data.util.FileUtils
-import com.seu.magicfilter.beautify.SafeMagicJni
 import com.qihao.filtercamera.data.util.FrameProcessor
 import com.qihao.filtercamera.data.util.ImageFormatConverter
 import com.qihao.filtercamera.domain.model.BeautyLevel
@@ -74,13 +77,16 @@ import com.qihao.filtercamera.domain.repository.ICameraRepository
 import com.qihao.filtercamera.domain.repository.IFilterRepository
 import com.qihao.filtercamera.domain.repository.ZoomRange
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
@@ -175,6 +181,7 @@ class CameraRepositoryImpl @Inject constructor(
     private var preview: Preview? = null
     private var imageAnalysis: ImageAnalysis? = null                      // 图像分析用例
     private var currentRecording: Recording? = null
+    private var recordingFinalizeDeferred: CompletableDeferred<String>? = null  // 用于等待录像完成
     private var currentAspectRatio: AspectRatio = AspectRatio.RATIO_4_3  // 当前画幅
 
     // 生命周期持有者
@@ -448,14 +455,9 @@ class CameraRepositoryImpl @Inject constructor(
             }
 
             // Step 1: 应用美颜效果（如果启用）
-            val beautifiedBitmap = if (intensity > 0f && SafeMagicJni.isLibraryLoaded()) {
-                // 计算美颜参数：美白和磨皮
-                val whiteLevel = intensity * 0.4f                                   // 美白强度较弱
-                val smoothLevel = intensity * 0.6f                                  // 磨皮强度适中
-
-                // 调用同步美颜处理
-                val result = SafeMagicJni.processBeauty(bitmap, whiteLevel, smoothLevel)
-                result.getOrNull() ?: bitmap                                        // 失败时使用原图
+            // 使用纯Kotlin实现的ColorMatrix美颜，避免Native层SIGSEGV崩溃
+            val beautifiedBitmap = if (intensity > 0f) {
+                applyKotlinBeautyEffect(bitmap, intensity)
             } else {
                 bitmap
             }
@@ -486,6 +488,53 @@ class CameraRepositoryImpl @Inject constructor(
             Log.e(TAG, "processFrameWithFilter: 帧处理失败", e)
             return null
         }
+    }
+
+    /**
+     * 使用纯Kotlin实现的美颜效果（用于实时预览）
+     *
+     * 通过ColorMatrix实现美白和柔肤效果，安全且不会崩溃
+     *
+     * @param bitmap 源Bitmap
+     * @param intensity 美颜强度 (0.0 - 1.0)
+     * @return 处理后的Bitmap
+     */
+    private fun applyKotlinBeautyEffect(bitmap: Bitmap, intensity: Float): Bitmap {
+        // 创建输出Bitmap
+        val resultBitmap = Bitmap.createBitmap(
+            bitmap.width,
+            bitmap.height,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(resultBitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        // 美白效果：增加亮度
+        val whitenMatrix = ColorMatrix().apply {
+            val brightness = intensity * 0.15f  // 最大15%亮度增加
+            set(floatArrayOf(
+                1f, 0f, 0f, 0f, brightness * 255,
+                0f, 1f, 0f, 0f, brightness * 255,
+                0f, 0f, 1f, 0f, brightness * 255,
+                0f, 0f, 0f, 1f, 0f
+            ))
+        }
+
+        // 饱和度轻微降低（使肤色更柔和）
+        val saturationMatrix = ColorMatrix().apply {
+            setSaturation(1f - intensity * 0.1f)  // 最多降低10%饱和度
+        }
+
+        // 合并效果矩阵
+        val combinedMatrix = ColorMatrix()
+        combinedMatrix.postConcat(whitenMatrix)
+        combinedMatrix.postConcat(saturationMatrix)
+
+        // 应用效果
+        paint.colorFilter = ColorMatrixColorFilter(combinedMatrix)
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+
+        return resultBitmap
     }
 
     /**
@@ -626,7 +675,7 @@ class CameraRepositoryImpl @Inject constructor(
             Log.d(TAG, "takePhoto: 滤镜处理完成 大小=${filteredBitmap.width}x${filteredBitmap.height}")
 
             // ==================== 美颜处理 ====================
-            val finalBitmap = if (beautyIntensity > 0f) {
+            val beautifiedBitmap = if (beautyIntensity > 0f) {
                 Log.d(TAG, "takePhoto: 正在应用美颜 intensity=$beautyIntensity")
                 val beautyLevel = BeautyLevel.fromIntensity(beautyIntensity)
                 val beautyResult = beautyProcessor.processBeauty(filteredBitmap, beautyLevel)
@@ -645,6 +694,23 @@ class CameraRepositoryImpl @Inject constructor(
                 filteredBitmap
             }
 
+            // ==================== 人像虚化处理 ====================
+            // 判断是否需要人像虚化处理（虚化等级不为NONE）
+            val finalBitmap = if (currentPortraitBlurLevel != PortraitBlurLevel.NONE) {
+                Log.d(TAG, "takePhoto: 正在应用人像虚化 level=$currentPortraitBlurLevel")
+                val portraitStartTime = System.currentTimeMillis()
+                val blurredBitmap = applyPortraitBlur(beautifiedBitmap)
+                val portraitTime = System.currentTimeMillis() - portraitStartTime
+                Log.d(TAG, "takePhoto: 人像虚化处理完成 耗时=${portraitTime}ms")
+                // 回收美颜处理后的Bitmap（如果不是滤镜处理结果）
+                if (blurredBitmap !== beautifiedBitmap && beautifiedBitmap !== filteredBitmap && !beautifiedBitmap.isRecycled) {
+                    beautifiedBitmap.recycle()
+                }
+                blurredBitmap
+            } else {
+                beautifiedBitmap
+            }
+
             Log.d(TAG, "takePhoto: 最终图片大小=${finalBitmap.width}x${finalBitmap.height}")
 
             // ==================== 保存文件 ====================
@@ -655,9 +721,17 @@ class CameraRepositoryImpl @Inject constructor(
 
             Log.d(TAG, "takePhoto: 照片保存成功 path=${photoFile.absolutePath}")
 
-            // 回收中间Bitmap（注意：美颜处理成功时filteredBitmap已在上面回收）
+            // 回收中间Bitmap
+            // 回收beautifiedBitmap（如果它不是最终图片且未被回收）
+            if (beautifiedBitmap !== finalBitmap && !beautifiedBitmap.isRecycled) {
+                beautifiedBitmap.recycle()
+            }
+            // 回收filteredBitmap（如果它不是beautifiedBitmap且未被回收）
+            if (filteredBitmap !== beautifiedBitmap && filteredBitmap !== finalBitmap && !filteredBitmap.isRecycled) {
+                filteredBitmap.recycle()
+            }
             // 回收nightProcessedBitmap（如果它不是最终使用的图片）
-            if (nightProcessedBitmap !== finalBitmap && !nightProcessedBitmap.isRecycled) {
+            if (nightProcessedBitmap !== finalBitmap && nightProcessedBitmap !== filteredBitmap && !nightProcessedBitmap.isRecycled) {
                 nightProcessedBitmap.recycle()
             }
             // 回收hdrProcessedBitmap（如果它不是夜景处理结果且未被回收）
@@ -760,8 +834,16 @@ class CameraRepositoryImpl @Inject constructor(
                             _isRecording.value = false
                             if (event.hasError()) {
                                 Log.e(TAG, "startRecording: 录像错误 code=${event.error}")
+                                // 通知等待方录像失败
+                                recordingFinalizeDeferred?.completeExceptionally(
+                                    Exception("录像错误: ${event.error}")
+                                )
                             } else {
-                                Log.d(TAG, "startRecording: 录像完成 uri=${event.outputResults.outputUri}")
+                                val outputUri = event.outputResults.outputUri
+                                Log.d(TAG, "startRecording: 录像完成 uri=$outputUri")
+                                // 通知等待方录像成功，传递文件路径
+                                val filePath = outputUri.path ?: videoFile.absolutePath
+                                recordingFinalizeDeferred?.complete(filePath)
                             }
                         }
                     }
@@ -776,6 +858,9 @@ class CameraRepositoryImpl @Inject constructor(
 
     /**
      * 停止录像
+     *
+     * 修复：使用 CompletableDeferred 等待 VideoRecordEvent.Finalize 事件，
+     * 确保文件完全写入后再返回路径，解决异步竞态条件导致的"文件不存在"问题
      */
     override suspend fun stopRecording(): Result<String> = withContext(Dispatchers.Main) {
         val recording = currentRecording ?: return@withContext Result.failure(
@@ -784,18 +869,39 @@ class CameraRepositoryImpl @Inject constructor(
 
         try {
             Log.d(TAG, "stopRecording: 停止录像")
-            recording.stop()
-            currentRecording = null
 
-            // 获取视频文件路径
-            val videoFile = getLatestTempVideoFile()
-            if (videoFile != null && videoFile.exists()) {
-                Result.success(videoFile.absolutePath)
-            } else {
-                Result.failure(Exception("视频文件不存在"))
+            // 创建 CompletableDeferred 等待 Finalize 事件
+            recordingFinalizeDeferred = CompletableDeferred()
+
+            // 停止录像（这会触发异步的 VideoRecordEvent.Finalize）
+            recording.stop()
+
+            // 等待 Finalize 事件完成（带超时保护）
+            val filePath = try {
+                withTimeout(10_000) {                                         // 最多等待10秒
+                    recordingFinalizeDeferred!!.await()
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e(TAG, "stopRecording: 等待录像完成超时")
+                // 超时后尝试查找最新的视频文件作为降级方案
+                val fallbackFile = getLatestTempVideoFile()
+                if (fallbackFile != null && fallbackFile.exists()) {
+                    Log.w(TAG, "stopRecording: 超时但找到视频文件，使用降级方案")
+                    fallbackFile.absolutePath
+                } else {
+                    throw Exception("视频保存超时")
+                }
+            } finally {
+                currentRecording = null
+                recordingFinalizeDeferred = null
             }
+
+            Log.d(TAG, "stopRecording: 录像保存成功 path=$filePath")
+            Result.success(filePath)
         } catch (e: Exception) {
             Log.e(TAG, "stopRecording: 停止录像失败", e)
+            currentRecording = null
+            recordingFinalizeDeferred = null
             Result.failure(e)
         }
     }

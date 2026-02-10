@@ -64,12 +64,14 @@ class BeautyProcessor @Inject constructor() {
         private const val WHITE_RATIO = 0.5f              // 美白强度比例
         private const val SMOOTH_RATIO = 0.8f             // 磨皮强度比例
 
-        // Native处理的安全图片尺寸限制（防止内存溢出导致SIGSEGV）
-        private const val MAX_NATIVE_DIMENSION = 1024     // 最大处理边长
-        private const val MAX_NATIVE_PIXELS = 800000      // 最大像素数（约800K）
+        // Native处理的安全图片尺寸限制（与C++层保持一致）
+        private const val MAX_NATIVE_DIMENSION = 2048     // 最大处理边长（C++ MAX_BEAUTY_DIMENSION）
+        private const val MAX_NATIVE_PIXELS = 4000000     // 最大像素数（C++ MAX_BEAUTY_PIXELS）
+        private const val MIN_NATIVE_DIMENSION = 32       // 最小处理边长（C++ MIN_BEAUTY_DIMENSION）
 
-        // 是否启用Native美颜（设为false则使用纯Kotlin实现）
-        private const val ENABLE_NATIVE_BEAUTY = false    // 禁用Native，防止SIGSEGV崩溃
+        // 是否启用Native美颜（暂时禁用以避免SIGSEGV崩溃，使用Kotlin纯实现替代）
+        // TODO: 修复C++层的线程安全和单例生命周期问题后再启用
+        private const val ENABLE_NATIVE_BEAUTY = false    // 禁用Native C++美颜，使用Kotlin实现
     }
 
     // 处理互斥锁，确保线程安全
@@ -152,25 +154,66 @@ class BeautyProcessor @Inject constructor() {
     }
 
     /**
-     * 使用Native库处理美颜（可能崩溃，需要先缩放）
+     * 使用Native库处理美颜（带尺寸安全检查）
      */
     private fun processWithNative(bitmap: Bitmap, whiteLevel: Float, smoothLevel: Float): Bitmap? {
-        // 检查图片尺寸，过大的图片需要先缩放
-        val scaledBitmap = scaleDownIfNeeded(bitmap)
-        val result = SafeMagicJni.processBeauty(scaledBitmap, whiteLevel, smoothLevel)
+        // 检查图片尺寸是否在Native安全范围内
+        if (!isNativeSizeSafe(bitmap.width, bitmap.height)) {
+            Log.w(TAG, "processWithNative: 图片尺寸超出安全范围 ${bitmap.width}x${bitmap.height}")
+            // 自动缩放到安全尺寸
+            val scaledBitmap = scaleDownIfNeeded(bitmap)
+            if (!isNativeSizeSafe(scaledBitmap.width, scaledBitmap.height)) {
+                Log.e(TAG, "processWithNative: 缩放后仍不安全，降级到Kotlin实现")
+                return null // 返回null触发Kotlin降级
+            }
+            return processNativeInternal(scaledBitmap, whiteLevel, smoothLevel, bitmap.width, bitmap.height)
+        }
+
+        return processNativeInternal(bitmap, whiteLevel, smoothLevel, bitmap.width, bitmap.height)
+    }
+
+    /**
+     * 检查尺寸是否在Native安全范围内
+     */
+    private fun isNativeSizeSafe(width: Int, height: Int): Boolean {
+        if (width < MIN_NATIVE_DIMENSION || height < MIN_NATIVE_DIMENSION) {
+            return false
+        }
+        if (width > MAX_NATIVE_DIMENSION || height > MAX_NATIVE_DIMENSION) {
+            return false
+        }
+        val pixels = width.toLong() * height
+        if (pixels > MAX_NATIVE_PIXELS) {
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 执行Native美颜处理（内部方法）
+     */
+    private fun processNativeInternal(
+        workBitmap: Bitmap,
+        whiteLevel: Float,
+        smoothLevel: Float,
+        targetWidth: Int,
+        targetHeight: Int
+    ): Bitmap? {
+        val result = SafeMagicJni.processBeauty(workBitmap, whiteLevel, smoothLevel)
 
         return result.fold(
             onSuccess = { resultBitmap ->
-                // 如果缩放过，需要放大回原尺寸
-                if (scaledBitmap !== bitmap) {
-                    scaleToSize(resultBitmap, bitmap.width, bitmap.height)
+                // 如果处理图片与目标尺寸不同，需要缩放
+                if (resultBitmap.width != targetWidth || resultBitmap.height != targetHeight) {
+                    Log.d(TAG, "processNativeInternal: 缩放结果 ${resultBitmap.width}x${resultBitmap.height} -> ${targetWidth}x${targetHeight}")
+                    scaleToSize(resultBitmap, targetWidth, targetHeight)
                 } else {
                     resultBitmap
                 }
             },
             onFailure = { error ->
-                Log.e(TAG, "processWithNative: 失败 - ${error.message}")
-                null
+                Log.e(TAG, "processNativeInternal: Native处理失败 - ${error.message}")
+                null // 返回null，外层会降级到Kotlin实现
             }
         )
     }

@@ -357,12 +357,14 @@ enum class DocumentScanModeUI(
  *
  * @param currentMode 当前选中的扫描模式
  * @param onModeSelected 模式选择回调
+ * @param onAdvancedScanClick 高级扫描（ML Kit）点击回调
  * @param modifier 修饰符
  */
 @Composable
 fun DocumentScanModeSelector(
     currentMode: DocumentScanModeUI,
     onModeSelected: (DocumentScanModeUI) -> Unit,
+    onAdvancedScanClick: (() -> Unit)? = null,                         // 高级扫描回调（可选）
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -421,6 +423,49 @@ fun DocumentScanModeSelector(
             color = Color.White.copy(alpha = 0.6f),
             fontSize = 11.sp
         )
+
+        // 高级扫描按钮（ML Kit）- 可选
+        if (onAdvancedScanClick != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFF4CAF50).copy(alpha = 0.8f))   // 绿色高亮
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onAdvancedScanClick
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📄",
+                        fontSize = 18.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "高级扫描（PDF导出）",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Text(
+                text = "使用 ML Kit 提供更精准的边缘检测和PDF导出",
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 10.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
     }
 }
 
